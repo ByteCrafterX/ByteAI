@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>ByteAI - Configurazioni - Indicizzazione di Immagini</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+    <style>
+        /* Stili per la barra di progresso e i log */
+        #progress-container {
+            display: block;
+            background-color: #f3f3f3;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        #progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            height: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #progress-bar-fill {
+            height: 100%;
+            background-color: #4caf50;
+            width: 0;
+            transition: width 0.2s ease;
+        }
+
+        #progress-percentage {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        #log-box {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Configurazioni di Indicizzazione</h1>
+    <div class="container">
+        <!-- Sezione per i messaggi flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="messages">
+              {% for category, message in messages %}
+                <div class="message {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Sezione per l'indicizzazione -->
+        <form action="/indicizza" method="post" id="indicizza-form" style="margin-bottom: 30px;">
+            <h2>Indicizzare Immagini</h2>
+            <label for="directory_indicizza">Directory delle Immagini da Indicizzare:</label>
+            <input type="text" id="directory_indicizza" name="directory_indicizza" placeholder="Inserisci il percorso della directory" required>
+            <button type="submit">Avvia Indicizzazione</button>
+        </form>
+
+        <!-- Barra di progresso e log -->
+        <div id="progress-container">
+            <h3>Avanzamento dell'Indicizzazione</h3>
+            <div id="progress-bar">
+                <div id="progress-bar-fill"></div>
+            </div>
+            <div id="progress-percentage">0%</div>
+            <h3>Log</h3>
+            <div id="log-box"></div>
+        </div>
+    </div>
+
+    <script>
+        // Funzione per aggiornare la barra di progresso e il log
+        function aggiornaProgresso() {
+            fetch('/stato_indicizzazione')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.percentuale !== undefined) {
+                        document.getElementById('progress-bar-fill').style.width = data.percentuale + '%';
+                        document.getElementById('progress-percentage').innerText = data.percentuale + '%';
+
+                        let logBox = document.getElementById('log-box');
+                        logBox.innerHTML = '';
+                        data.log.forEach(function(messaggio) {
+                            let p = document.createElement('p');
+                            p.textContent = messaggio;
+                            logBox.appendChild(p);
+                        });
+                        logBox.scrollTop = logBox.scrollHeight;
+                    }
+                })
+                .catch(error => console.error('Errore durante il recupero dello stato di avanzamento:', error));
+        }
+
+        window.onload = function() {
+            setInterval(aggiornaProgresso, 2000);
+        };
+    </script>
+</body>
+</html>

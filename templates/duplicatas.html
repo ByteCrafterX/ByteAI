@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>ByteAI - Immagini Duplicate</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </nav>
+            <button class="theme-toggle" onclick="toggleTheme()">&#9788;</button>
+        </div>
+    </header>
+    <div class="container">
+        <h1>Immagini Duplicate</h1>
+
+        <!-- Seção de informações e controles -->
+        <div class="controls-section">
+            <form action="{{ url_for('encontrar_duplicatas_route') }}" method="post" class="similarity-form">
+                <label for="similaridade">Valore di similarità (consigliato 0.95, usa il punto o la virgola come separatore decimale):</label>
+                <input type="text" name="similaridade" id="similaridade" value="{{ similaridade }}">
+                <button type="submit" class="search-again-button">Cerca nuovamente</button>
+            </form>
+
+            <p><strong>Numero di duplicati trovati:</strong> {{ total_duplicatas }}</p>
+
+            <!-- Botões -->
+            <div class="buttons-container">
+                <button id="scroll-to-bottom-button" class="scroll-button">Vai in fondo</button>
+                <button id="delete-duplicates-button" class="delete-button" data-similarity="{{ similaridade }}">Elimina Duplicati</button>
+            </div>
+        </div>
+
+        <!-- Mensagem quando não há duplicatas -->
+        {% if total_duplicatas == 0 %}
+            <div class="no-results">
+                <p>Nessuna immagine duplicata trovata con il valore di similarità fornito.</p>
+            </div>
+        {% else %}
+            {% for gruppo in grupos %}
+            <div class="duplicate-group">
+                {% for img in gruppo %}
+                <div class="image-container">
+                    <img src="/immagini/{{ img.percorso_relativo }}" alt="Immagine"
+                         data-percorso="{{ img.percorso }}"
+                         data-percorso-relativo="{{ img.percorso_relativo }}"
+                         data-modifica="{{ img.data_modifica }}"
+                         class="duplicate-image">
+                    <p class="image-info">{{ img.percorso }}<br>Modificata: {{ img.data_modifica }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Modal para exibir os detalhes da immagine -->
+    <div class="overlay" onclick="closeDetails()"></div>
+    <div class="image-details">
+        <img src="" alt="Immagine" id="image-detail">
+        <p id="image-info"></p>
+        <button onclick="closeDetails()">Chiudi</button>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Função para mostrar os detalhes da immagine
+        function showDetails(imgElement) {
+            const details = document.querySelector('.image-details');
+            const overlay = document.querySelector('.overlay');
+            const imgDetail = document.getElementById('image-detail');
+            const imgInfo = document.getElementById('image-info');
+
+            imgDetail.src = imgElement.src;
+
+            const percorso = imgElement.dataset.percorso;
+            const dataModifica = imgElement.dataset.modifica;
+
+            imgInfo.innerHTML = `<strong>Percorso:</strong> ${percorso}<br><strong>Modificata:</strong> ${dataModifica}`;
+
+            details.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        function closeDetails() {
+            document.querySelector('.image-details').style.display = 'none';
+            document.querySelector('.overlay').style.display = 'none';
+        }
+
+        // Adicionar evento de clique às imagens
+        document.querySelectorAll('.duplicate-image').forEach(img => {
+            img.addEventListener('click', () => showDetails(img));
+        });
+
+        // Função para rolar até o final da página
+        document.getElementById('scroll-to-bottom-button').addEventListener('click', function() {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        });
+
+        // Função para confirmar a exclusão
+        document.getElementById('delete-duplicates-button').addEventListener('click', function() {
+            if (confirm('Sei sicuro di voler eliminare tutte le immagini duplicate? Questa azione non può essere annullata.')) {
+                // Obter o valor de similaridade do atributo data
+                const similarity = this.getAttribute('data-similarity');
+                // Redirecionar para a rota de eliminação com o valor de similaridade
+                window.location.href = '{{ url_for("eliminar_duplicatas_route") }}?similarity=' + similarity;
+            }
+        });
+
+        // Função para alternar il tema
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            document.body.classList.toggle('light');
+        }
+    </script>
+</body>
+</html>

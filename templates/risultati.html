@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>ByteAI - Risultati della Ricerca</title>
+    <!-- Link para o arquivo CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body class="light">
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </nav>
+            <button class="theme-toggle" onclick="toggleTheme()">&#9788;</button>
+        </div>
+    </header>
+
+    <h1>Risultati della Ricerca</h1>
+    <div class="gallery" id="gallery">
+        {% for img in immagini %}
+            <img data-src="/immagini/{{ img.percorso_relativo }}" alt="Immagine"
+                 data-percorso-originale="{{ img.percorso }}"
+                 data-percorso-relativo="{{ img.percorso_relativo }}"
+                 class="lazy-image">
+        {% endfor %}
+    </div>
+    <div id="sentinel"></div>
+    <div class="no-results" style="display: none;">Nessuna immagine trovata.</div>
+
+    <!-- Modal para exibir os detalhes da imagem -->
+    <div class="overlay" onclick="closeDetails()"></div>
+    <div class="image-details">
+        <img src="" alt="Immagine" id="image-detail">
+        <p id="image-info"></p>
+        <button onclick="closeDetails()">Chiudi</button>
+    </div>
+
+    <!-- Indicador de carregamento -->
+    <div id="loading" style="display: none; text-align: center; padding: 20px;">
+        <p>Caricamento in corso...</p>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 ByteAI. Tutti i diritti riservati.</p>
+    </div>
+
+
+
+    <!-- Scripts -->
+    <script>
+        let currentIndex = {{ immagini|length }};
+        let totalResults = {{ total_resultados }};
+        let perPage = 100;  // Carrega 100 imagens por vez
+        console.log(`Total de resultados: ${totalResults}`);
+        const gallery = document.getElementById('gallery');
+        let imagesData = []; // Armazena os dados de todas as imagens carregadas
+        let currentImageIndex = null; // Índice da imagem atualmente exibida no modal
+
+        function createImageElement(imgData, index) {
+            const imgElement = document.createElement('img');
+            imgElement.dataset.src = '/immagini/' + imgData.percorso_relativo;
+            imgElement.alt = 'Immagine';
+            imgElement.dataset.percorsoOriginale = imgData.percorso;
+            imgElement.dataset.percorsoRelativo = imgData.percorso_relativo;
+            imgElement.dataset.index = index;
+            imgElement.classList.add('lazy-image');
+            return imgElement;
+        }
+
+        function observeImages() {
+            const lazyImages = document.querySelectorAll('.lazy-image');
+            const config = {
+                rootMargin: '50px 0px',
+                threshold: 0.01
+            };
+
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.onload = () => {
+                            img.classList.add('loaded');
+                        };
+                        img.onclick = () => showDetails(parseInt(img.dataset.index)); // Adiciona o manipulador de clique com o índice
+                        img.classList.remove('lazy-image');
+                        observer.unobserve(img);
+                    }
+                });
+            }, config);
+
+            lazyImages.forEach(image => {
+                imageObserver.observe(image);
+            });
+        }
+
+        function loadImages() {
+            console.log(`loadImages() chamado. currentIndex: ${currentIndex}, totalResults: ${totalResults}`);
+            if (currentIndex >= totalResults) {
+                console.log('Todas as imagens foram carregadas.');
+                return;
+            }
+
+            console.log(`Solicitando imagens a partir do índice ${currentIndex}`);
+
+            // Mostrar indicador de carregamento
+            document.getElementById('loading').style.display = 'block';
+
+            fetch('/carregar_mais_imagens', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 'current_index': currentIndex, 'per_page': perPage })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(`Imagens recebidas: ${data.imagens.length}`);
+
+                data.imagens.forEach((imgData, i) => {
+                    imagesData.push(imgData);
+                    const imgElement = createImageElement(imgData, imagesData.length - 1);
+                    gallery.appendChild(imgElement);
+                });
+
+                currentIndex += data.imagens.length;
+                console.log(`Novo currentIndex: ${currentIndex}`);
+
+                // Esconde o indicador de carregamento
+                document.getElementById('loading').style.display = 'none';
+
+                // Observa as novas imagens para lazy loading
+                observeImages();
+
+                if (currentIndex >= totalResults) {
+                    console.log('Todas as imagens foram carregadas após atualização do currentIndex.');
+                    const sentinel = document.getElementById('sentinel');
+                    if (sentinel) {
+                        sentinel.parentNode.removeChild(sentinel);
+                    }
+                    // Exibe uma mensagem para o usuário
+                    const endMessage = document.createElement('p');
+                    endMessage.textContent = 'Non ci sono più immagini da caricare.';
+                    endMessage.style.textAlign = 'center';
+                    gallery.appendChild(endMessage);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar as imagens:', error);
+                // Esconde o indicador de carregamento em caso de erro
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        function observeSentinel() {
+            const sentinel = document.getElementById('sentinel');
+            const observerOptions = {
+                root: null,
+                rootMargin: '200px',
+                threshold: 0
+            };
+
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        console.log('Sentinela está visível. Chamando loadImages()');
+                        loadImages();
+                    }
+                });
+            }, observerOptions);
+
+            observer.observe(sentinel);
+            console.log('Sentinela está sendo observada.');
+        }
+
+        // Carrega as imagens iniciais e observa para o lazy loading
+        window.onload = function() {
+            // Armazena os dados das imagens iniciais
+            const initialImages = document.querySelectorAll('.gallery img');
+            initialImages.forEach((img, index) => {
+                imagesData.push({
+                    'percorso': img.dataset.percorsoOriginale,
+                    'percorso_relativo': img.dataset.percorsoRelativo
+                });
+                img.dataset.index = index;
+            });
+            observeImages();
+            observeSentinel();
+        };
+
+        // Função para mostrar os detalhes da imagem
+        function showDetails(index) {
+            currentImageIndex = index;
+            const imgData = imagesData[index];
+            const details = document.querySelector('.image-details');
+            const overlay = document.querySelector('.overlay');
+            const imgDetail = document.getElementById('image-detail');
+            const imgInfo = document.getElementById('image-info');
+
+            imgDetail.src = '/immagini/' + imgData.percorso_relativo;
+
+            const percorsoOriginale = imgData.percorso;
+            const percorsoRelativo = imgData.percorso_relativo;
+
+            fetch('/get_metadata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 'image_path': percorsoRelativo })
+            })
+            .then(response => response.json())
+            .then(data => {
+                let metadatiHtml = '';
+                if (data.metadati && Object.keys(data.metadati).length > 0) {
+                    metadatiHtml += '<strong>Metadati:</strong><ul>';
+                    if (data.metadati['dc:title']) {
+                        metadatiHtml += `<li><strong>Titolo:</strong> ${data.metadati['dc:title']}</li>`;
+                    }
+                    if (data.metadati['dc:subject']) {
+                        metadatiHtml += `<li><strong>Soggetto:</strong> ${data.metadati['dc:subject']}</li>`;
+                    }
+                    if (data.metadati['xmp:rating']) {
+                        metadatiHtml += `<li><strong>Valutazione:</strong> ${data.metadati['xmp:rating']}</li>`;
+                    }
+                    metadatiHtml += '</ul>';
+                } else {
+                    metadatiHtml += '<strong>Metadati:</strong> Non disponibili.';
+                }
+
+                imgInfo.innerHTML = `<strong>Percorso:</strong> ${percorsoOriginale}<br>${metadatiHtml}`;
+                details.style.display = 'block';
+                overlay.style.display = 'block';
+            })
+            .catch(error => {
+                imgInfo.innerHTML = '<strong>Errore nel caricamento dei metadati.</strong>';
+                details.style.display = 'block';
+                overlay.style.display = 'block';
+            });
+        }
+
+        function closeDetails() {
+            document.querySelector('.image-details').style.display = 'none';
+            document.querySelector('.overlay').style.display = 'none';
+            currentImageIndex = null;
+        }
+
+        function nextImage() {
+            if (currentImageIndex !== null && currentImageIndex < imagesData.length - 1) {
+                showDetails(currentImageIndex + 1);
+            }
+        }
+
+        function prevImage() {
+            if (currentImageIndex !== null && currentImageIndex > 0) {
+                showDetails(currentImageIndex - 1);
+            }
+        }
+
+        // Adicionar listener para as teclas de seta
+        document.addEventListener('keydown', function(event) {
+            if (currentImageIndex !== null) { // Se o modal está aberto
+                if (event.key === 'ArrowRight') {
+                    nextImage();
+                } else if (event.key === 'ArrowLeft') {
+                    prevImage();
+                } else if (event.key === 'Escape') {
+                    closeDetails();
+                }
+            }
+        });
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            document.body.classList.toggle('light');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,637 @@
+/* Importar a fonte Montserrat do Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+
+/* Estilos globais */
+body {
+    font-family: 'Montserrat', Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+/* Fundo da página inicial */
+body.homepage {
+    background-image: url('/static/background.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-attachment: fixed;
+    color: #f0f0f0;
+}
+
+/* Cabeçalho */
+header {
+    background-color: rgba(255, 255, 255, 0.8); /* Fundo semitransparente */
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    height: 100px;
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+nav ul li {
+    margin-left: 20px;
+}
+
+nav ul li a {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+nav ul li a:hover {
+    color: #4A90E2;
+}
+
+/* Mensagens */
+.messages {
+    text-align: center;
+    padding: 20px;
+}
+
+.messages .error {
+    color: red;
+}
+
+.messages .success {
+    color: green;
+}
+
+/* Container de pesquisa */
+.search-container {
+    display: flex;
+    justify-content: center;
+    padding: 80px 20px;
+}
+
+.search-box {
+    width: 100%;
+    max-width: 600px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 40px 30px;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.search-box input[type="text"],
+.search-box select {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    margin-bottom: 20px;
+    border: 1px solid #CCC;
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+.search-box input[type="text"]:focus,
+.search-box select:focus {
+    border-color: #4A90E2;
+    outline: none;
+}
+
+.search-box button {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    background-color: #4A90E2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.search-box button:hover {
+    background-color: #357ABD;
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+/* Rodapé */
+.footer {
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.8); /* Fundo semitransparente */
+    color: #999;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Container principal */
+.container {
+    max-width: 800px;
+    margin: 30px auto;
+    background: rgba(255, 255, 255, 0.95); /* Fundo levemente opaco */
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+}
+
+label {
+    font-weight: 500;
+}
+
+input[type="text"],
+select {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    margin: 5px 0 15px 0;
+    border: 1px solid #CCC;
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+input[type="text"]:focus,
+select:focus {
+    border-color: #4A90E2;
+    outline: none;
+}
+
+button {
+    background-color: #4A90E2;
+    color: white;
+    padding: 15px;
+    font-size: 16px;
+    width: 100%;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+button:hover {
+    background-color: #357ABD;
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+h1, h2, h3 {
+    color: #333;
+}
+
+h1 {
+    text-align: center;
+    padding: 20px;
+    margin-bottom: 0;
+}
+
+/* Galeria de imagens */
+.gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px;
+}
+
+.gallery img {
+    margin: 10px;
+    border: none;
+    width: 200px;
+    height: auto;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    opacity: 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.gallery img.loaded {
+    opacity: 1;
+}
+
+.gallery img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+.no-results {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+}
+
+/* Modal e overlay */
+.image-details {
+    display: none;
+    padding: 20px;
+    background-color: white;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    border-radius: 8px;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    width: auto;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+}
+
+.image-details img {
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.image-details button {
+    margin-top: 10px;
+    background-color: #4A90E2;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.image-details button:hover {
+    background-color: #357ABD;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+}
+
+/* Botão de alternância de tema */
+button.theme-toggle {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 4px 8px;
+    background-color: #4A90E2;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0.9;
+    z-index: 1003;
+    width: auto;
+    height: 30px;
+}
+
+button.theme-toggle:hover {
+    background-color: #357ABD;
+}
+
+/* Texto dentro do botão em italiano */
+button.theme-toggle::before {
+    content: "Tema";
+}
+
+body.light {
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+body.dark {
+    background-color: #333;
+    color: #eaeaea;
+}
+
+/* Responsividade */
+@media only screen and (max-width: 768px) {
+    header .container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    nav ul li {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .search-box,
+    .container {
+        width: 90%;
+        margin: 20px auto;
+    }
+
+    button.theme-toggle {
+        right: 10px;
+        top: 80px;
+    }
+
+    .gallery img {
+        width: calc(50% - 40px);
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .gallery img {
+        width: calc(100% - 40px);
+    }
+}
+
+/* Barra de progresso e log */
+#progress-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+#progress-bar {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    height: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+#progress-bar-fill {
+    height: 100%;
+    background-color: #4A90E2;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+#progress-percentage {
+    text-align: center;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+#log-box {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: monospace;
+    margin-top: 20px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Seção de controles na página de duplicatas */
+.controls-section {
+    background-color: #f9f9f9;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.similarity-form {
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.similarity-form label {
+    margin-right: 10px;
+    font-weight: 500;
+}
+
+.similarity-form input[type="text"] {
+    width: 80px;
+    padding: 8px;
+    font-size: 14px;
+    margin-right: 10px;
+    border: 1px solid #CCC;
+    border-radius: 4px;
+}
+
+.search-again-button {
+    background-color: #4A90E2;
+    color: white;
+    padding: 8px 15px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.search-again-button:hover {
+    background-color: #357ABD;
+}
+
+.buttons-container {
+    margin-top: 10px;
+}
+
+.buttons-container button {
+    margin: 5px;
+    padding: 8px 15px;
+    font-size: 14px;
+}
+
+.scroll-button {
+    background-color: #4A90E2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.scroll-button:hover {
+    background-color: #357ABD;
+}
+
+.delete-button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.delete-button:hover {
+    background-color: #c0392b;
+}
+
+/* Mensagem quando não há resultados */
+.no-results {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+}
+
+/* Estilos para o botão de utilidades */
+.utility-button {
+    background-color: #4A90E2;
+    color: white;
+    padding: 15px 30px;
+    font-size: 18px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    margin-top: 20px;
+}
+
+.utility-button:hover {
+    background-color: #357ABD;
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+/* Seção de utilidades */
+.utility-section {
+    text-align: center;
+    margin-top: 40px;
+}
+
+/* Container da imagem */
+.image-container {
+    margin: 10px;
+    text-align: center;
+}
+
+.duplicate-image {
+    width: 200px;
+    height: auto;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Informações abaixo da imagem */
+.image-info {
+    font-size: 14px;
+    color: #555;
+    margin-top: 5px;
+    word-wrap: break-word;
+    max-width: 200px;
+    margin: 5px auto 0 auto;
+}
+
+/* Grupo de duplicatas */
+.duplicate-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 30px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* Espaçamento entre grupos */
+.duplicate-group + .duplicate-group {
+    margin-top: 20px;
+}
+
+.duplicate-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+/* Seção de informações */
+.info-section {
+    background-color: #f1f1f1;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+/* Botão de rolagem */
+.scroll-button-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.scroll-button {
+    background-color: #4A90E2;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.scroll-button:hover {
+    background-color: #357ABD;
+}
+
+/* Botão de eliminar duplicatas */
+.delete-duplicates-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.delete-button {
+    background-color: #e74c3c;
+    color: white;
+    padding: 15px 30px;
+    font-size: 18px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.delete-button:hover {
+    background-color: #c0392b;
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+.logo {
+    height: 100px; /* Ajuste conforme necessário */
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.brand-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    color: #4A90E2;
+    letter-spacing: 1px; /* Ajuste para visual mais compacto */
+    font-weight: 500;
+    text-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 10px;
+    text-decoration: none;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+
+
+.brand-name:hover {
+    color: #357ABD;
+    text-shadow: 0 0 15px rgba(53, 122, 189, 0.7);
+}
