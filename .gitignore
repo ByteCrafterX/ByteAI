@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# IMAGEM TAR
+byteai.tar
+
 # Distribution / packaging
 .Python
 build/
