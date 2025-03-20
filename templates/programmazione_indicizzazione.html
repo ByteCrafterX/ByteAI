@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Programma Reindicizzazione</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+                <span class="brand-name">Studio Elle Ricerca Immagini</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Pianifica Reindicizzazione</h1>
+        <p>
+            Scegli i giorni della settimana e l'ora in cui vuoi che la reindicizzazione venga avviata automaticamente.
+        </p>
+
+        <!-- Sezione messaggi Flask -->
+        <div class="messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <p class="{{ category }}">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <form action="{{ url_for('salva_programmazione_indicizzazione') }}" method="POST">
+            <label><strong>Giorni della Settimana:</strong></label>
+            <br>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px;">
+                {% set all_days = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'] %}
+                {% for day in all_days %}
+                <div>
+                    <input type="checkbox" id="day_{{day}}" name="days" value="{{day}}"
+                           {% if day in schedule.days %} checked {% endif %}>
+                    <label for="day_{{day}}">{{ day }}</label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <label for="ora_programmata"><strong>Ora Programmata:</strong></label>
+            <input type="time" id="ora_programmata" name="ora_programmata" value="{{ schedule.hour }}" required>
+
+            <button type="submit" class="button-blue" style="margin-top:20px;">
+                Salva Programmazione
+            </button>
+        </form>
+
+        {% if schedule.days %}
+        <div style="margin-top:30px;">
+            <h3>Programmazione Attuale:</h3>
+            <p>Giorni selezionati: {{ schedule.days|join(', ') }}</p>
+            <p>Orario: {{ schedule.hour }}</p>
+        </div>
+        {% endif %}
+
+        <!-- NOVA SEÇÃO: Status della reindex programmata -->
+        <div id="scheduled-progress" style="margin-top:40px; background:#f9f9f9; padding:10px; border-radius:4px;">
+            <h2>Stato della Reindicizzazione Programmata</h2>
+            <div id="scheduled-progress-bar" style="width:100%; background-color:#e0e0e0; border-radius:4px; height:20px; position:relative; overflow:hidden;">
+                <div id="scheduled-progress-bar-fill" style="height:100%; background-color:#4A90E2; width:0; transition:width 0.3s ease;"></div>
+            </div>
+            <p id="scheduled-progress-percentage" style="text-align:center; margin-top:10px; font-weight:bold;">0%</p>
+
+            <div style="margin-top:20px;">
+                <h3>Log</h3>
+                <div id="scheduled-log-box" style="max-height:300px; overflow-y:auto; background:#fff; padding:10px; border:1px solid #ccc; font-family:monospace;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Polling para /stato_reindicizzazione_programmata
+        function updateScheduledReindexStatus() {
+            fetch("{{ url_for('stato_reindicizzazione_programmata') }}")
+                .then(response => response.json())
+                .then(data => {
+                    let percent = data.percentuale || 0;
+                    document.getElementById('scheduled-progress-bar-fill').style.width = percent + '%';
+                    document.getElementById('scheduled-progress-percentage').innerText = percent + '%';
+
+                    const logs = data.log || [];
+                    const logBox = document.getElementById('scheduled-log-box');
+                    logBox.innerHTML = '';
+                    logs.forEach(line => {
+                        const p = document.createElement('p');
+                        p.innerText = line;
+                        logBox.appendChild(p);
+                    });
+                    logBox.scrollTop = logBox.scrollHeight;
+
+                    if (!data.concluso) {
+                        setTimeout(updateScheduledReindexStatus, 2000);
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+        updateScheduledReindexStatus();
+    </script>
+</body>
+</html>

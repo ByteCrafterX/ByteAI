@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Studio Elle - Indicizzazione di Immagini</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Folha de estilo -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Fonte Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+                <span class="brand-name">Studio Elle Ricerca Immagini</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                    <li><a href="{{ url_for('logout') }}" style="color:red;">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h1 class="page-title">Indicizzazione delle Immagini</h1>
+
+        <!-- Mensagens Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        {% if 'config' in category or category in ['error','success','info'] %}
+                            <div class="message {{ category }}">{{ message }}</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Card para adicionar nova directory -->
+        <div class="card">
+            <h2>Indicizza Nuova Directory</h2>
+            <form action="{{ url_for('indicizza') }}" method="post">
+                <input type="text" id="directory_indicizza" name="directory_indicizza"
+                       placeholder="Percorso directory" required>
+
+                <!-- Campo para nome da diretoria (apelido) -->
+                <input type="text" id="nome_indicizza" name="nome_indicizza"
+                       placeholder="Nome da directory (opzionale)">
+
+                <button type="submit">Avvia Indicizzazione</button>
+            </form>
+        </div>
+
+        <!-- Card para gestao -->
+        <div class="card">
+            <h2>Gestione Indicizzazione</h2>
+            <form action="{{ url_for('interrompi_indicizzazione_route') }}" method="post" style="display:inline-block;">
+                <button type="submit" class="button-red">Interrompi Indicizzazione</button>
+            </form>
+            <form action="{{ url_for('reindicizza_tutto') }}" method="post" style="display:inline-block;">
+                <button type="submit" class="button-blue"
+                        onclick="return confirm('Sei sicuro di voler reindicizzare tutto?')">
+                    Reindicizzazione Completa
+                </button>
+            </form>
+        </div>
+
+        <!-- Card listando directorias -->
+        <div class="card">
+            <h2>Directory Indicizzate</h2>
+            <ul class="directory-list">
+                {% for d in directories_indicizzate %}
+                    <li style="margin-bottom: 10px;">
+                        <strong>Percorso:</strong> {{ d.path }}<br>
+                        <strong>Nome:</strong>
+                        <form action="{{ url_for('aggiorna_nome_directory') }}" method="post" style="display:inline;">
+                            <input type="hidden" name="path" value="{{ d.path }}">
+                            <input type="text" name="display_name" value="{{ d.nome }}" placeholder="Inserisci un nome">
+                            <button type="submit" class="button-blue">Aggiorna</button>
+                        </form>
+                        <form action="{{ url_for('rimuovi_directory') }}" method="post" style="display:inline;">
+                            <input type="hidden" name="directory_da_rimuovere" value="{{ d.path }}">
+                            <button type="submit" class="button-red" onclick="return confirm('Sei sicuro?')">
+                                Rimuovi
+                            </button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Card de progresso -->
+        <div class="card">
+            <h2>Progresso Attuale</h2>
+            <div id="progress-bar">
+                <div id="progress-bar-fill"></div>
+            </div>
+            <div id="progress-percentage">0%</div>
+            <h3>Log Attività</h3>
+            <div id="log-box"></div>
+        </div>
+    </main>
+
+    <script>
+        function aggiornaProgresso() {
+            fetch('{{ url_for("stato_indicizzazione") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.percentuale !== undefined) {
+                        document.getElementById('progress-bar-fill').style.width = data.percentuale + '%';
+                        document.getElementById('progress-percentage').textContent = data.percentuale + '%';
+                    }
+                    if (data.log) {
+                        document.getElementById('log-box').innerHTML = data.log.join("<br>");
+                    }
+                    if (data.percentuale < 100 && !data.log.includes("Errore")) {
+                        setTimeout(aggiornaProgresso, 2000);
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+        aggiornaProgresso();
+    </script>
+</body>
+</html>

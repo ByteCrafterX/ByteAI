@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Configurazione Generativa</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+                <span class="brand-name">Studio Elle - Generativa</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('logout') }}" style="color:red;">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="margin-top: 30px;">
+        <h2>Configurazione per la Generazione di Immagini</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="messages">
+            {% for category, message in messages %}
+              <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <p>Seleziona le directory (già indicizzate) che vuoi utilizzare nella fase di generazione.</p>
+
+        <!-- Formulário para salvar config gerativa -->
+        <form method="POST">
+            <table class="table-listing" style="max-width: 600px;">
+                <thead>
+                    <tr>
+                        <th>Directory</th>
+                        <th>Abilita per la Generazione</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in directories_indicizzate %}
+                        {% set path_ = d.path %}
+                        {% set nome_ = d.nome %}
+                        {% set checked_ = '' %}
+                        {% if generative_data and generative_data.get(path_) %}
+                            {% set checked_ = 'checked' %}
+                        {% endif %}
+                        <tr>
+                            <td>
+                                <strong>{{ nome_ if nome_ else path_ }}</strong><br>
+                                <small>{{ path_ }}</small>
+                            </td>
+                            <td style="text-align:center;">
+                                <input type="checkbox" name="enable_{{ path_ }}" id="enable_{{ path_ }}" {{ checked_ }}>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <br>
+            <button type="submit" class="button-blue">Salva Configurazione</button>
+        </form>
+
+        <hr>
+        <h3>Indexazione Incrementale per Generazione</h3>
+        <p>Avvia un processo di training/ri-training leggero (ad es. LoRA) o altre procedure personalizzate.</p>
+        <form action="{{ url_for('indicizza_generativa') }}" method="POST" style="display:inline-block;">
+            <button type="submit" class="button-blue">Inizia Indexazione Incrementale</button>
+        </form>
+
+        <!-- NOVO: Botão para treinar LoRA -->
+        <form action="{{ url_for('treino_lora') }}" method="POST" style="display:inline-block; margin-left:15px;">
+            <button type="submit" class="button-blue">Treina LoRA</button>
+        </form>
+
+        <hr>
+        <h3>Progresso do Treino LoRA</h3>
+        <progress id="loraProgressBar" value="0" max="100" style="width:300px;"></progress>
+        <br>
+        <pre id="loraLog"
+             style="border:1px solid #ccc; padding:10px; max-height:250px; overflow:auto; margin-top:10px;"></pre>
+
+    </main>
+
+    <!-- Script para atualizar a barra de progresso e o log de Treino LoRA -->
+    <script>
+      function atualizaProgresso() {
+        fetch("{{ url_for('stato_lora') }}")
+          .then(resp => resp.json())
+          .then(data => {
+            // Atualiza barra
+            document.getElementById('loraProgressBar').value = data.percent;
+
+            // Atualiza log
+            let logText = data.log.join("\n");
+            document.getElementById('loraLog').textContent = logText;
+
+            // Se não terminou, agenda nova checagem
+            if (!data.completed) {
+              setTimeout(atualizaProgresso, 2000);
+            } else {
+              // Seta progress=100% no final
+              document.getElementById('loraProgressBar').value = 100;
+            }
+          })
+          .catch(err => {
+            console.error("Erro consultando /stato_lora:", err);
+            // Tenta de novo em 5s
+            setTimeout(atualizaProgresso, 5000);
+          });
+      }
+
+      // Chama imediatamente ao carregar a página
+      atualizaProgresso();
+    </script>
+</body>
+</html>

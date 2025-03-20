@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Studio Elle - Conversor di Immagini<</title>
+    <!-- Meta tag para responsividade -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Link para o arquivo CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Importação da fonte Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+                <span class="brand-name">Studio Elle Ricerca Immagini</span>
+            </a>
+
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </nav>
+
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Conversor di Immagini</h1>
+        <p>Specifica la cartella di input e di output, poi avvia la conversione.<br>
+           Durante il processo, potrai seguire il progresso e il log in tempo reale.</p>
+
+        <!-- Mensagens Flask -->
+        <div class="messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <p class="{{ category }}">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Formulário para escolher diretórios de entrada/saída -->
+        <form action="{{ url_for('inicia_conversao') }}" method="POST" style="margin-bottom: 30px;">
+            <label for="input_dir"><strong>Cartella di Input:</strong></label>
+            <input type="text" id="input_dir" name="input_dir" placeholder="/share/Condivisa/TEST" required>
+
+            <label for="output_dir"><strong>Cartella di Output:</strong></label>
+            <input type="text" id="output_dir" name="output_dir" placeholder="/share/Condivisa/TEST" required>
+
+            <button type="submit" class="button-blue" style="margin-top: 20px;">Converti</button>
+        </form>
+
+        <!-- Barra de progresso -->
+        <div id="progress-container" style="display: none;">
+            <h2>Avanzamento</h2>
+            <div id="progress-bar" style="width: 100%; background-color: #e0e0e0; border-radius: 4px; height: 20px; position: relative; overflow: hidden;">
+                <div id="progress-bar-fill" style="height: 100%; background-color: #4A90E2; width: 0; transition: width 0.3s ease;"></div>
+            </div>
+            <div id="progress-percentage" style="text-align: center; margin-top: 10px; font-weight: bold;">0%</div>
+        </div>
+
+        <!-- Caixa de log -->
+        <div id="log-box" style="margin-top: 20px; display: none; border: 1px solid #ccc; padding: 10px; max-height: 300px; overflow-y: auto; font-family: monospace; background-color: #f9f9f9;">
+        </div>
+    </div>
+
+    <script>
+
+
+    // Vamos fazer polling a cada 2 segundos para /stato_conversao
+    let pollingInterval = null;
+
+    function fetchConversionStatus() {
+        fetch("{{ url_for('stato_conversao') }}")
+            .then(response => response.json())
+            .then(data => {
+                // Se não tiver começado, data.total_files=0 etc.
+                if (data.total_files > 0) {
+                    document.getElementById('progress-container').style.display = 'block';
+                    document.getElementById('log-box').style.display = 'block';
+                }
+
+                // Barra de progresso
+                let percent = data.percentuale;
+                document.getElementById('progress-bar-fill').style.width = percent + '%';
+                document.getElementById('progress-percentage').innerText = percent + '%';
+
+                // Log
+                let logHTML = '';
+                data.log.forEach(line => {
+                    // Escapar HTML simples
+                    logHTML += line + '<br>';
+                });
+                document.getElementById('log-box').innerHTML = logHTML;
+
+                // Se completed for true, paramos o polling
+                if (data.completed) {
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                }
+            })
+            .catch(err => console.error(err));
+    }
+
+    // Inicia o polling quando a página carrega
+    window.onload = function() {
+        pollingInterval = setInterval(fetchConversionStatus, 2000);
+    };
+    </script>
+</body>
+</html>

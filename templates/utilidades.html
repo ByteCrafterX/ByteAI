@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Utilità</title>
+    <!-- Link per il tuo CSS principale (styles.css) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+    <!-- Fonte Orbitron (opzionale, se necessario) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+                <span class="brand-name">Studio Elle Ricerca Immagini</span>
+            </a>
+
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </nav>
+
+        </div>
+    </header>
+
+    <!-- Titolo con stile coerente (centrato, margine in alto) -->
+    <h1 style="text-align: center; margin-top: 20px;">Utilità</h1>
+
+    <div class="container">
+        <!-- Eventuali messaggi (Flash) -->
+        <div class="messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <p class="{{ category }}">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="utility-section" style="margin-top: 20px;">
+            <p>In questa sezione, puoi eseguire diverse operazioni per gestire le tue immagini.</p>
+
+            <!-- Sezione con i pulsanti ridimensionati e organizzati -->
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
+                <!-- Bottone per trovare duplicati -->
+                <form action="{{ url_for('encontrar_duplicatas_route') }}" method="post" style="margin: 0;">
+                    <button type="submit" class="button-blue" style="width: auto; padding: 10px 20px; font-size: 14px;">
+                        Trova Immagini Duplicate
+                    </button>
+                </form>
+
+                <!-- Bottone per il Conversor di Immagini -->
+                <a href="{{ url_for('conversor') }}" class="button-blue"
+                   style="text-decoration: none; display: inline-block; text-align: center; padding: 10px 20px; font-size: 14px;">
+                    Conversor di Immagini
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+    </script>
+</body>
+</html>

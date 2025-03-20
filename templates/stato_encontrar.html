@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Stato Ricerca Duplicati</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </nav>
+
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 style="text-align: center; margin-top: 20px;">Ricerca di Immagini Duplicate in Corso</h1>
+
+        <!-- Contenitore con la barra di progresso -->
+        <div id="progress-container" style="margin-top: 20px;">
+            <div id="progress-bar" style="width: 100%; background-color: #e0e0e0; border-radius: 4px; height: 20px; position: relative; overflow: hidden;">
+                <div id="progress-bar-fill" style="height: 100%; background-color: #4A90E2; width: 0; transition: width 0.3s ease;"></div>
+            </div>
+            <p id="progress-percentage" style="text-align: center; margin-top: 10px; font-weight: bold;">0%</p>
+        </div>
+
+        <!-- Spinner di caricamento (opzionale) -->
+        <div class="spinner" style="margin: 30px auto;">
+            <div class="double-bounce1"></div>
+            <div class="double-bounce2"></div>
+        </div>
+
+        <!-- NUOVA SEZIONE: Box di Log -->
+        <div style="margin-top: 20px;">
+            <h2>Log del Processo</h2>
+            <!-- L'area di testo scorrevole: max-height, overflow-y, font monospace -->
+            <div id="log-box" style="max-height: 300px; overflow-y: auto; background: #f9f9f9; padding: 10px; border: 1px solid #ccc; font-family: monospace;">
+                <!-- I log verranno inseriti via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funzione di polling per aggiornare la barra di progresso e i log
+        function updateProgress() {
+            fetch("{{ url_for('stato_encontrar') }}")
+                .then(response => response.json())
+                .then(data => {
+                    // Aggiorna percentuale
+                    let percent = data.percentuale || 0;
+                    document.getElementById('progress-bar-fill').style.width = percent + '%';
+                    document.getElementById('progress-percentage').innerText = percent + '%';
+
+                    // Popola i log
+                    const logs = data.log || [];
+                    const logBox = document.getElementById('log-box');
+                    logBox.innerHTML = ""; // Svuota prima di rigenerare
+                    logs.forEach(line => {
+                        // Creiamo un paragrafo per ogni riga di log
+                        const p = document.createElement('p');
+                        p.innerText = line;
+                        logBox.appendChild(p);
+                    });
+
+                    // Facciamo auto-scroll in fondo
+                    logBox.scrollTop = logBox.scrollHeight;
+
+                    // Se il processo è concluso (completed = true), reindirizziamo
+                    if (data.completed) {
+                        // Esempio: dopo 1 secondo, reindirizza ai risultati
+                        setTimeout(function() {
+                            window.location.href = "{{ url_for('mostrar_duplicatas') }}";
+                        }, 1000);
+                    } else {
+                        // Altrimenti continuiamo il polling
+                        setTimeout(updateProgress, 1000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore durante l\'aggiornamento del progresso:', error);
+                    setTimeout(updateProgress, 5000);
+                });
+        }
+
+        // Chiamata iniziale
+        updateProgress();
+
+
+    </script>
+</body>
+</html>

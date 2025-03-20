@@ -1,0 +1,864 @@
+/* -----------------------------------------------------------
+   1) FONTES E RESET BÁSICO
+----------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap');
+
+/* ADIÇÃO IMPORTANTE: Garantir html/body ocupando 100% */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+* {
+    box-sizing: inherit;
+}
+body {
+    font-family: 'Montserrat', Arial, sans-serif;
+    background-color: #e3e3e3;
+    color: #333;
+    /* Removido margin/padding já acima (html,body) */
+    /* margin: 0;
+       padding: 0; */
+}
+
+/* -----------------------------------------------------------
+   2) BODY.HOMEPAGE como FLEX, p/ footer no final
+----------------------------------------------------------- */
+body.homepage {
+    display: flex;            /* permite flexbox */
+    flex-direction: column;   /* empilha no eixo vertical */
+    min-height: 100vh;        /* ocupa toda a tela */
+    background-image: url('/static/background.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    color: #333;
+}
+
+/* -----------------------------------------------------------
+   2.1) CABEÇALHO, LOGO E NAVEGAÇÃO
+----------------------------------------------------------- */
+header {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+header .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.logo {
+    height: 60px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.brand-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    color: #4A90E2;
+    letter-spacing: 1px;
+    font-weight: 500;
+    text-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 10px;
+    text-decoration: none;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+.brand-name:hover {
+    color: #357ABD;
+    text-shadow: 0 0 10px rgba(53, 122, 189, 0.7);
+}
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+nav ul li {
+    margin-left: 20px;
+}
+nav ul li a {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+nav ul li a:hover {
+    color: #4A90E2;
+}
+
+/* Botão hamburguer no mobile */
+.menu-toggle {
+    display: none;
+    flex-direction: column;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.menu-toggle span {
+    width: 25px;
+    height: 3px;
+    background: #333;
+    margin: 4px 0;
+    transition: 0.3s;
+}
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: flex;
+    }
+    nav {
+        position: absolute;
+        top: 70px;
+        right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        width: 100%;
+        display: none;
+        flex-direction: column;
+        padding: 10px 0;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    nav.open {
+        display: flex;
+    }
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+    }
+    nav ul li {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+}
+
+/* -----------------------------------------------------------
+   3) MENSAGENS / FLASH
+----------------------------------------------------------- */
+.messages {
+    text-align: center;
+    padding: 20px;
+}
+.messages .error {
+    color: red;
+}
+.messages .success {
+    color: green;
+}
+.message {
+    margin-bottom: 8px;
+    padding: 8px;
+}
+
+/* -----------------------------------------------------------
+   4) FOOTER fixo no fim (após flex:1 do conteúdo)
+----------------------------------------------------------- */
+/* Removido position: relative; margin-top: 20px; */
+.footer {
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #999;
+    border-top: 1px solid #e0e0e0;
+    /* ADIÇÃO IMPORTANTE: margin-top: auto => empurra pro fim */
+    margin-top: auto;
+    padding: 20px;
+}
+body.homepage .footer {
+    padding: 10px;
+}
+
+/* Ajustes de responsividade no footer do mobile */
+@media (max-width: 768px) {
+    body.homepage .footer {
+        position: static !important; /* remove relative/fixed */
+        padding: 15px 10px;
+        font-size: 14px;
+        border-top: none;
+        background-color: rgba(255,255,255,0.95);
+        margin-top: auto !important; /* certifique que fica no fim */
+    }
+}
+
+/* -----------------------------------------------------------
+   5) BOTÕES E FORMULÁRIOS BÁSICOS
+----------------------------------------------------------- */
+button,
+input[type="submit"],
+input[type="button"] {
+    background-color: #4A90E2;
+    color: white;
+    padding: 15px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+button:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover {
+    background-color: #357ABD;
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+.button-red {
+    background-color: #e74c3c !important;
+    color: white !important;
+    padding: 8px 15px !important;
+    font-size: 14px !important;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+.button-red:hover {
+    background-color: #c0392b !important;
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+.button-blue {
+    background-color: #3498db !important;
+    color: white !important;
+    padding: 8px 15px !important;
+    font-size: 14px !important;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+.button-blue:hover {
+    background-color: #2980b9 !important;
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+/* -----------------------------------------------------------
+   6) CONTAINERS, LABELS E INPUTS
+----------------------------------------------------------- */
+.container {
+    max-width: 800px;
+    margin: 30px auto;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+}
+label {
+    font-weight: 500;
+    display: block;
+    margin: 10px 0 5px;
+}
+input[type="text"],
+input[type="file"],
+input[type="date"],
+input[type="time"],
+select,
+textarea {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    margin-bottom: 15px;
+    border: 1px solid #CCC;
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+input[type="text"]:focus,
+input[type="file"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+select:focus,
+textarea:focus {
+    border-color: #4A90E2;
+    outline: none;
+}
+
+/* -----------------------------------------------------------
+   7) SEÇÕES E LAYOUT DA HOME
+----------------------------------------------------------- */
+/* ADIÇÃO IMPORTANTE: flex: 1; p/ empurrar footer ao fim */
+.search-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 80px 20px;
+    gap: 20px;
+}
+.search-box {
+    width: 100%;
+    max-width: 600px;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 40px 30px;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    text-align: center;
+}
+.search-box h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+.search-button {
+    background-color: #4A90E2;
+    color: white;
+    padding: 15px;
+    font-size: 16px;
+    width: 100%;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.search-button:hover {
+    background-color: #357ABD;
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+/* -----------------------------------------------------------
+   8) TAGS
+----------------------------------------------------------- */
+.tags-container {
+    display: none;
+    margin-top: 20px;
+    text-align: left;
+    flex: 0 0 300px;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    overflow-y: auto;
+}
+.tags-container.active {
+    display: block;
+}
+.tags-container h3 {
+    margin-top: 0;
+    color: #333;
+}
+#select-all-tags {
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+    background-color: #4A90E2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+#select-all-tags:hover {
+    background-color: #357ABD;
+}
+#tags-list {
+    /* espaço para tags geradas dinamicamente */
+}
+.tag {
+    display: inline-block;
+    background-color: #f0f0f0;
+    color: #333;
+    padding: 5px 10px;
+    margin: 5px 5px 0 0;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+.tag.selected {
+    background-color: #4CAF50;
+    color: white;
+}
+.tag:hover {
+    background-color: #e0e0e0;
+}
+
+/* -----------------------------------------------------------
+   9) DIRECTORIES-SELECTION
+----------------------------------------------------------- */
+.directory-label {
+    font-weight: 600;
+    margin-top: 15px;
+    display: block;
+}
+.directories-selection {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+}
+.directories-selection div {
+    display: inline-block;
+    margin: 5px;
+}
+.directories-selection input[type="checkbox"] {
+    display: none;
+}
+.directories-selection label {
+    background-color: #f0f0f0;
+    color: black;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s, color 0.3s;
+    display: inline-block;
+    max-width: 300px;
+    min-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+.directories-selection input[type="checkbox"]:checked + label {
+    background-color: #4CAF50;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.directories-selection label:hover {
+    background-color: #e0e0e0;
+}
+
+/* -----------------------------------------------------------
+   10) GALERIA DE IMAGENS / MODAL
+----------------------------------------------------------- */
+.gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px;
+}
+.gallery img {
+    margin: 10px;
+    border: none;
+    width: 200px;
+    height: auto;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    opacity: 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.gallery img.loaded {
+    opacity: 1;
+}
+.gallery img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+.esclusiva {
+    border: 4px solid red !important;
+}
+.no-results {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+    color: #333;
+}
+
+/* Overlay + Modal */
+.overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+.overlay.open {
+    display: block;
+    opacity: 1;
+}
+.image-details {
+    display: none;
+    padding: 20px;
+    background-color: white;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    z-index: 1000;
+    border-radius: 8px;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    max-width: 95%;
+    max-height: 95%;
+    overflow: hidden;
+    opacity: 0;
+}
+.image-details.open {
+    display: block;
+    animation: fadeInScale 0.6s forwards;
+}
+.image-details-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    height: auto;
+}
+.image-preview {
+    text-align: center;
+}
+.image-preview img {
+    max-width: 100%;
+    max-height: 95vh;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+#image-info {
+    font-size: 14px;
+    color: #666;
+    margin: 0 auto;
+    max-width: 95%;
+    word-break: break-all;
+    text-align: center;
+    line-height: 1.3;
+    margin-bottom: 10px;
+}
+.mobile-info-button {
+    display: none;
+    background-color: #4A90E2;
+    color: #fff;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    width: auto;
+}
+.mobile-info-button:hover {
+    background-color: #357ABD;
+}
+.metadata-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 600px;
+    justify-content: flex-start;
+    max-height: 85vh;
+    overflow-y: auto;
+    margin-top: 5px;
+}
+textarea#note-immagine {
+    background-color: #F0F2F5;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    resize: vertical;
+    line-height: 1.4;
+}
+.metadata-container button {
+    padding: 10px 12px;
+    font-size: 14px;
+    margin-top: 5px;
+    margin-bottom: 0;
+    width: auto;
+}
+
+/* -----------------------------------------------------------
+   11) OVERLAY DE CARREGAMENTO (SPINNER)
+----------------------------------------------------------- */
+#loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+.spinner {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #4A90E2;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* -----------------------------------------------------------
+   12) PROGRESS BAR E LOG
+----------------------------------------------------------- */
+#progress-bar {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    height: 20px;
+    position: relative;
+    overflow: hidden;
+}
+#progress-bar-fill {
+    height: 100%;
+    background-color: #4A90E2;
+    width: 0;
+    transition: width 0.3s ease;
+}
+#progress-percentage {
+    text-align: center;
+    margin-top: 10px;
+    font-weight: bold;
+}
+#log-box {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: monospace;
+    margin-top: 20px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* -----------------------------------------------------------
+   13) RESPONSIVIDADE EXTRA
+----------------------------------------------------------- */
+@media only screen and (max-width: 768px) {
+    /* Body.homepage -> no change, mas o container do header colapsa. */
+    header .container {
+        flex-direction: column;
+        align-items: center;
+    }
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+    }
+    nav ul li {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+    .search-container {
+        flex-direction: column;
+        padding: 40px 20px;
+    }
+    .search-box {
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 20px;
+        padding: 30px;
+    }
+    .tags-container {
+        width: 100%;
+        margin-top: 20px;
+    }
+    .gallery {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        justify-items: center;
+    }
+    .gallery img {
+        width: 100% !important;
+        height: auto;
+    }
+    .image-details {
+        width: 95%;
+        height: auto;
+        max-height: 90%;
+        overflow: auto;
+    }
+    .image-details-content {
+        flex-direction: column;
+        align-items: center;
+        height: auto;
+    }
+    .mobile-info-button {
+        display: inline-block;
+    }
+    .metadata-container {
+        display: none !important;
+    }
+    .metadata-container.show-mobile {
+        display: flex !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .image-details {
+        max-width: 95%;
+        max-height: 95%;
+    }
+    .image-details-content {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 30px;
+        height: auto;
+        max-height: 90vh;
+    }
+    .image-preview {
+        flex: 1.8;
+        min-width: 60%;
+    }
+    .image-preview img {
+        max-height: 95vh;
+        max-width: 100%;
+        width: auto;
+    }
+    .metadata-container {
+        flex: 0.8;
+        max-height: 90vh;
+        min-width: 350px;
+        padding-right: 15px;
+    }
+}
+.image-details.open {
+    animation: fadeInScale 0.6s forwards;
+}
+@keyframes fadeInScale {
+    from {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* -----------------------------------------------------------
+   14) AJUSTES PARA METADADOS NO CELULAR
+----------------------------------------------------------- */
+@media (max-width: 768px) {
+    .metadata-container,
+    .image-preview img,
+    .image-details {
+        font-size: 14px;
+    }
+    .image-preview img {
+        max-height: 60vh;
+        max-width: 100%;
+    }
+}
+
+/* ====== LOGIN OVERLAY ====== */
+.login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Por cima de tudo */
+}
+.login-box-floating {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 25px 30px;
+    width: 300px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+}
+.login-box-floating label {
+    display: block;
+    margin: 10px 0 5px 0;
+    font-weight: 600;
+}
+.login-box-floating input[type="text"],
+.login-box-floating input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+.login-overlay .login-box-floating {
+    animation: slideDown 0.4s ease forwards;
+}
+@keyframes slideDown {
+    0% { transform: translateY(-50px); opacity: 0; }
+    100% { transform: translateY(0px); opacity: 1; }
+}
+
+/* Mensagens de sucesso: contorno branco fino */
+.messages .success,
+.message.success {
+    color: #fff !important;
+    background-color: #28a745 !important;
+    border: 1px solid #fff !important;
+    display: inline-block;
+}
+/* Mensagens de erro: contorno branco fino, fundo vermelho */
+.messages .error,
+.message.error {
+    color: #fff !important;
+    background-color: #dc3545 !important;
+    border: 1px solid #fff !important;
+    display: inline-block;
+}
+
+/* ======================================================
+   ADIÇÃO PARA O MENU MAIOR NA PÁGINA DE CONFIGURAÇÕES
+====================================================== */
+.config-wrapper {
+    display: flex;
+    gap: 20px;
+}
+.sidebar-config-large {
+    flex: 0 0 250px; /* Largura maior na sidebar */
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+}
+.sidebar-config-large h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+.menu-vertical-large {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.menu-vertical-large a {
+    text-align: center;
+    font-size: 16px;
+    padding: 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: block;
+}
+.menu-vertical-large a:hover {
+    background-color: #f0f0f0;
+}
+
+.main-content-config {
+    flex: 1;
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+}
+.main-content-config .page-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 600;
+    font-size: 1.4rem;
+}
+
+@media (max-width: 768px) {
+    .config-wrapper {
+        flex-direction: column;
+    }
+    .sidebar-config-large {
+        flex: none;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    .main-content-config {
+        width: 100%;
+    }
+}

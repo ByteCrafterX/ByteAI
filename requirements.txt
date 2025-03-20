@@ -1,0 +1,9 @@
+flask==2.3.2
+waitress==2.1.2
+faiss-cpu==1.7.4
+torch==1.13.1
+transformers==4.19.2
+Pillow==10.0.0
+numpy==1.22.3
+APScheduler
+

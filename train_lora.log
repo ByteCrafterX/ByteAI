@@ -1,0 +1,162 @@
+2025-03-17 21:55:19,182 - INFO - __main__ - ===== Iniciando script train_lora.py (adaptado) =====
+2025-03-17 21:55:19,189 - INFO - __main__ - Distributed environment: DistributedType.NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cpu
+
+Mixed precision type: no
+
+2025-03-17 21:55:19,196 - INFO - __main__ - Criando dataset...
+2025-03-17 21:55:19,246 - INFO - __main__ - Carregando pipeline base: runwayml/stable-diffusion-v1-5
+2025-03-17 21:57:55,483 - INFO - __main__ - ===== Iniciando script train_lora.py (adaptado) =====
+2025-03-17 21:57:55,491 - INFO - __main__ - Distributed environment: DistributedType.NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cpu
+
+Mixed precision type: no
+
+2025-03-17 21:57:55,493 - INFO - __main__ - Criando dataset...
+2025-03-17 21:57:55,539 - INFO - __main__ - Carregando pipeline base: runwayml/stable-diffusion-v1-5
+2025-03-17 22:02:21,897 - INFO - __main__ - ===== Iniciando script train_lora.py (adaptado) =====
+2025-03-17 22:02:21,901 - INFO - __main__ - Distributed environment: DistributedType.NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cpu
+
+Mixed precision type: no
+
+2025-03-17 22:02:21,903 - INFO - __main__ - Criando dataset...
+2025-03-17 22:02:21,946 - INFO - __main__ - Carregando pipeline base: runwayml/stable-diffusion-v1-5
+2025-03-17 22:02:23,990 - INFO - __main__ - Total de parâmetros LOARA = 0
+2025-03-17 22:04:25,971 - INFO - __main__ - ===== Iniciando script train_lora.py (adaptado) =====
+2025-03-17 22:04:25,977 - INFO - __main__ - Distributed environment: DistributedType.NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cpu
+
+Mixed precision type: no
+
+2025-03-17 22:04:25,978 - INFO - __main__ - Criando dataset...
+2025-03-17 22:04:26,025 - INFO - __main__ - Carregando pipeline base: runwayml/stable-diffusion-v1-5
+2025-03-17 22:04:27,472 - INFO - __main__ - Total de parâmetros LOARA = 0
+2025-03-17 22:08:55,146 - INFO - __main__ - ===== Iniciando script train_lora.py (estilo DreamBooth + LoRA) =====
+2025-03-17 22:08:55,487 - INFO - __main__ - Distributed environment: DistributedType.NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cpu
+
+Mixed precision type: no
+
+2025-03-17 22:08:55,489 - INFO - __main__ - Criando dataset...
+2025-03-17 22:08:55,536 - INFO - __main__ - Total de imagens: 23546
+2025-03-17 22:08:55,536 - INFO - __main__ - Carregando pipeline base: runwayml/stable-diffusion-v1-5
+2025-03-17 22:08:57,278 - INFO - __main__ - Injetando LoRA nas camadas to_q, to_k, to_v, to_out.0...
+2025-03-17 22:08:57,305 - INFO - __main__ - Total de parâmetros LoRA (treináveis): 797184
+2025-03-18 19:55:44,242 - INFO - __main__ - ===== Iniciando script train_lora.py (estilo DreamBooth + LoRA) =====
+2025-03-18 19:55:44,242 - INFO - __main__ - ===== Iniciando script train_lora.py (estilo DreamBooth + LoRA) =====
+2025-03-18 19:55:44,279 - INFO - __main__ - Distributed environment: DistributedType.NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cpu
+
+Mixed precision type: no
+
+2025-03-18 19:55:44,280 - INFO - __main__ - Distributed environment: DistributedType.NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cpu
+
+Mixed precision type: no
+
+2025-03-18 19:55:44,447 - INFO - __main__ - Criando dataset...
+2025-03-18 19:55:44,447 - INFO - __main__ - Criando dataset...
+2025-03-18 19:55:44,493 - INFO - __main__ - Total de imagens: 23546
+2025-03-18 19:55:44,493 - INFO - __main__ - Carregando pipeline base: runwayml/stable-diffusion-v1-5
+2025-03-18 19:55:44,493 - INFO - __main__ - Total de imagens: 23546
+2025-03-18 19:55:44,493 - INFO - __main__ - Carregando pipeline base: runwayml/stable-diffusion-v1-5
+2025-03-18 19:55:46,534 - INFO - __main__ - Injetando LoRA nas camadas to_q, to_k, to_v, to_out.0...
+2025-03-18 19:55:46,563 - INFO - __main__ - Injetando LoRA nas camadas to_q, to_k, to_v, to_out.0...
+2025-03-18 19:55:46,564 - INFO - __main__ - Total de parâmetros LoRA (treináveis): 797184
+2025-03-18 19:55:46,595 - INFO - __main__ - Total de parâmetros LoRA (treináveis): 797184
+2025-03-18 19:56:50,949 - INFO - __main__ - ===== Iniciando script train_lora.py (estilo DreamBooth + LoRA) =====
+2025-03-18 19:56:50,957 - INFO - __main__ - Distributed environment: DistributedType.NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cpu
+
+Mixed precision type: no
+
+2025-03-18 19:56:50,960 - INFO - __main__ - Criando dataset...
+2025-03-18 19:56:51,047 - INFO - __main__ - Total de imagens: 23546
+2025-03-18 19:56:51,047 - INFO - __main__ - Carregando pipeline base: runwayml/stable-diffusion-v1-5
+2025-03-18 19:56:53,054 - INFO - __main__ - Injetando LoRA nas camadas to_q, to_k, to_v, to_out.0...
+2025-03-18 19:56:53,098 - INFO - __main__ - Total de parâmetros LoRA (treináveis): 797184
+2025-03-18 20:33:49,158 - INFO - __main__ - Step 50/1000, loss=0.3048
+2025-03-18 20:34:19,712 - INFO - __main__ - Step 50/1000, loss=0.3048
+2025-03-18 20:34:48,318 - INFO - __main__ - Step 50/1000, loss=0.3048
+2025-03-18 21:11:27,614 - INFO - __main__ - Step 100/1000, loss=0.3164
+2025-03-18 21:11:54,347 - INFO - __main__ - Step 100/1000, loss=0.3164
+2025-03-18 21:12:21,843 - INFO - __main__ - Step 100/1000, loss=0.3164
+2025-03-18 21:48:58,112 - INFO - __main__ - Step 150/1000, loss=0.2841
+2025-03-18 21:49:22,142 - INFO - __main__ - Step 150/1000, loss=0.2841
+2025-03-18 21:49:49,999 - INFO - __main__ - Step 150/1000, loss=0.2841
+2025-03-18 22:34:05,176 - INFO - __main__ - Step 200/1000, loss=0.3142
+2025-03-18 22:34:33,615 - INFO - __main__ - Step 200/1000, loss=0.3142
+2025-03-18 22:36:03,871 - INFO - __main__ - Step 200/1000, loss=0.3142
+2025-03-18 23:30:35,217 - INFO - __main__ - Step 250/1000, loss=0.4399
+2025-03-18 23:30:58,031 - INFO - __main__ - Step 250/1000, loss=0.4399
+2025-03-18 23:31:51,796 - INFO - __main__ - Step 250/1000, loss=0.4399
+2025-03-19 00:08:26,112 - INFO - __main__ - Step 300/1000, loss=0.2165
+2025-03-19 00:08:56,072 - INFO - __main__ - Step 300/1000, loss=0.2165
+2025-03-19 00:09:38,358 - INFO - __main__ - Step 300/1000, loss=0.2165
+2025-03-19 00:45:57,753 - INFO - __main__ - Step 350/1000, loss=0.3567
+2025-03-19 00:46:29,623 - INFO - __main__ - Step 350/1000, loss=0.3567
+2025-03-19 00:47:21,122 - INFO - __main__ - Step 350/1000, loss=0.3567
+2025-03-19 01:23:40,523 - INFO - __main__ - Step 400/1000, loss=0.4014
+2025-03-19 01:24:10,163 - INFO - __main__ - Step 400/1000, loss=0.4014
+2025-03-19 01:25:12,392 - INFO - __main__ - Step 400/1000, loss=0.4014
+2025-03-19 02:01:06,112 - INFO - __main__ - Step 450/1000, loss=0.2097
+2025-03-19 02:01:52,613 - INFO - __main__ - Step 450/1000, loss=0.2097
+2025-03-19 02:03:02,181 - INFO - __main__ - Step 450/1000, loss=0.2097
+2025-03-19 02:38:44,382 - INFO - __main__ - Step 500/1000, loss=0.3076
+2025-03-19 02:39:32,075 - INFO - __main__ - Step 500/1000, loss=0.3076
+2025-03-19 02:40:36,372 - INFO - __main__ - Step 500/1000, loss=0.3076
+2025-03-19 03:16:11,351 - INFO - __main__ - Step 550/1000, loss=0.2000
+2025-03-19 03:17:01,060 - INFO - __main__ - Step 550/1000, loss=0.2000
+2025-03-19 03:18:20,129 - INFO - __main__ - Step 550/1000, loss=0.2000
+2025-03-19 03:53:42,929 - INFO - __main__ - Step 600/1000, loss=0.2403
+2025-03-19 03:54:29,760 - INFO - __main__ - Step 600/1000, loss=0.2403
+2025-03-19 03:55:59,035 - INFO - __main__ - Step 600/1000, loss=0.2403
+2025-03-19 04:31:29,312 - INFO - __main__ - Step 650/1000, loss=0.3942
+2025-03-19 04:32:06,747 - INFO - __main__ - Step 650/1000, loss=0.3942
+2025-03-19 04:33:35,816 - INFO - __main__ - Step 650/1000, loss=0.3942
+2025-03-19 05:09:13,512 - INFO - __main__ - Step 700/1000, loss=0.1614
+2025-03-19 05:10:07,285 - INFO - __main__ - Step 700/1000, loss=0.1614
+2025-03-19 05:11:13,183 - INFO - __main__ - Step 700/1000, loss=0.1614
+2025-03-19 05:46:50,560 - INFO - __main__ - Step 750/1000, loss=0.3526
+2025-03-19 05:47:35,509 - INFO - __main__ - Step 750/1000, loss=0.3526
+2025-03-19 05:48:51,029 - INFO - __main__ - Step 750/1000, loss=0.3526
+2025-03-19 06:24:30,406 - INFO - __main__ - Step 800/1000, loss=0.2007
+2025-03-19 06:24:56,306 - INFO - __main__ - Step 800/1000, loss=0.2007
+2025-03-19 06:26:09,307 - INFO - __main__ - Step 800/1000, loss=0.2007
+2025-03-19 07:02:03,974 - INFO - __main__ - Step 850/1000, loss=0.4189
+2025-03-19 07:02:26,443 - INFO - __main__ - Step 850/1000, loss=0.4189
+2025-03-19 07:03:29,885 - INFO - __main__ - Step 850/1000, loss=0.4189
+2025-03-19 07:39:35,129 - INFO - __main__ - Step 900/1000, loss=0.2762
+2025-03-19 07:40:03,269 - INFO - __main__ - Step 900/1000, loss=0.2762
+2025-03-19 07:41:05,525 - INFO - __main__ - Step 900/1000, loss=0.2762
+2025-03-19 08:17:11,528 - INFO - __main__ - Step 950/1000, loss=0.3219
+2025-03-19 08:17:43,626 - INFO - __main__ - Step 950/1000, loss=0.3219
+2025-03-19 08:18:31,985 - INFO - __main__ - Step 950/1000, loss=0.3219
+2025-03-19 08:55:05,687 - INFO - __main__ - Step 1000/1000, loss=0.5320
+2025-03-19 08:55:40,046 - INFO - __main__ - Step 1000/1000, loss=0.5320
+2025-03-19 08:56:29,030 - INFO - __main__ - Step 1000/1000, loss=0.5320

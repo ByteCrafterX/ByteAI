@@ -1,0 +1,39 @@
+{
+    "schedule": {
+        "days": [
+            "Lunedì",
+            "Martedì",
+            "Mercoledì",
+            "Giovedì",
+            "Venerdì",
+            "Sabato",
+            "Domenica"
+        ],
+        "hour": "22:21"
+    },
+    "directories_indicizzate": [
+        {
+            "path": "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)",
+            "nome": "STUDIO ELLE RGB"
+        },
+        {
+            "path": "/home/marco-alecsander/Scrivania/",
+            "nome": "DESKTOP"
+        }
+    ],
+    "users": [
+        {
+            "username": "chickellero",
+            "password": "chickellero",
+            "nome": "Marco"
+        },
+        {
+            "username": "alessandra",
+            "password": "Password@1"
+        }
+    ],
+    "generative_dirs": {
+        "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)": true,
+        "/home/marco-alecsander/Scrivania/": false
+    }
+}

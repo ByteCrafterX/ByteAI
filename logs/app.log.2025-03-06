@@ -1,0 +1,21 @@
+[2025-03-06 17:44:47,346] DEBUG in app: [DEBUG] __main__ -> Chamando start_scheduler() para APScheduler.
+[2025-03-06 17:44:47,346] DEBUG in app: start_scheduler() chamado. Carregando pianificazione...
+[2025-03-06 17:44:47,347] DEBUG in app: Programando reindex com day_of_week=mon,tue,wed,thu,fri,sat,sun, hour=15, minute=57
+[2025-03-06 17:44:47,353] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-03-06 17:44:47,353] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-03-06 17:49:18,377] DEBUG in app: Iniciando busca (TEXTO): '', categoria='INDIAN CASHMERES'
+[2025-03-06 17:49:19,172] DEBUG in app: Busca retornou 100 imagens, total: 23547
+[2025-03-06 17:50:27,821] DEBUG in app: [DEBUG] __main__ -> Chamando start_scheduler() para APScheduler.
+[2025-03-06 17:50:27,821] DEBUG in app: start_scheduler() chamado. Carregando pianificazione...
+[2025-03-06 17:50:27,821] DEBUG in app: Programando reindex com day_of_week=mon,tue,wed,thu,fri,sat,sun, hour=15, minute=57
+[2025-03-06 17:50:27,827] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-03-06 17:50:27,827] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-03-06 17:54:16,562] DEBUG in app: [DEBUG] __main__ -> Chamando start_scheduler() para APScheduler.
+[2025-03-06 17:54:16,562] DEBUG in app: start_scheduler() chamado. Carregando pianificazione...
+[2025-03-06 17:54:16,562] DEBUG in app: Programando reindex com day_of_week=mon,tue,wed,thu,fri,sat,sun, hour=15, minute=57
+[2025-03-06 17:54:16,566] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-03-06 17:54:16,567] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-03-06 17:54:50,027] DEBUG in app: reindicizza_tutto chamado.
+[2025-03-06 17:54:50,035] DEBUG in app: Iniciando reindicizzazione TUDO para dirs: ['/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)']
+[2025-03-06 17:56:53,806] DEBUG in app: Iniciando busca (TEXTO): ' winter landscape', categoria='NATURE AND LANDSCAPES'
+[2025-03-06 17:56:53,806] DEBUG in app: Busca retornou 0 imagens, total: 0

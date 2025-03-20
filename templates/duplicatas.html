@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Studio Elle - Immagini Duplicate</title>
+    <!-- Meta tag per responsività -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Link per il CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Fonte Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+                <span class="brand-name">Studio Elle Ricerca Immagini</span>
+            </a>
+
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </nav>
+
+        </div>
+    </header>
+
+    <!-- Titolo coerente con le altre pagine -->
+    <h1 style="text-align: center; margin-top: 20px;">Immagini Duplicate</h1>
+
+    <div class="container">
+        <div class="controls-section">
+            <form action="{{ url_for('encontrar_duplicatas_route') }}" method="post" class="similarity-form">
+                <!-- Default = 0.99 -->
+                <label for="similaridade">
+                    Valore di similarità (consigliato 0.99, usa il punto o la virgola come separatore decimale):
+                </label>
+                <!-- Se `similaridade` non esiste, useremo 0.99 come default -->
+                <input type="text" name="similaridade" id="similaridade" value="{{ similaridade|default(0.99) }}">
+                <button type="submit" class="search-again-button">Cerca nuovamente</button>
+            </form>
+
+            <p><strong>Numero di duplicati trovati:</strong> {{ total_duplicatas }}</p>
+
+            <div class="buttons-container">
+                <button id="scroll-to-bottom-button" class="scroll-button">Vai in fondo</button>
+                <button id="delete-duplicates-button" class="delete-button" data-similarity="{{ similaridade }}">
+                    Elimina Duplicati
+                </button>
+            </div>
+        </div>
+
+        {% if total_duplicatas == 0 %}
+            <div class="no-results">
+                <p>Nessuna immagine duplicata trovata con il valore di similarità fornito.</p>
+            </div>
+        {% else %}
+            {% for gruppo in grupos %}
+            <div class="duplicate-group"
+                 style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px;
+                        border: 1px solid #ccc; padding: 10px; border-radius: 8px;">
+                {% for img in gruppo %}
+                <div class="image-container" style="max-width: 150px; text-align: center;">
+                    <img src="/miniatura/{{ img.percorso | urlencode }}"
+                         alt="Immagine"
+                         data-percorso="{{ img.percorso }}"
+                         data-percorso-relativo="{{ img.percorso_relativo }}"
+                         data-modifica="{{ img.data_modifica }}"
+                         class="duplicate-image"
+                         style="max-width: 100%; border-radius: 4px; cursor: pointer;">
+                    <!-- Aggiungiamo la spezzatura del testo con word-wrap e break-word -->
+                    <p class="image-info"
+                       style="font-size: 12px; margin-top: 5px;
+                              word-wrap: break-word; overflow-wrap: break-word;
+                              white-space: pre-wrap;">
+                        {{ img.percorso }}<br>
+                        Modificata: {{ img.data_modifica }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Overlay e modal per i dettagli -->
+    <div class="overlay" onclick="closeDetails()" style="display: none;"></div>
+    <div class="image-details" style="display: none;">
+        <img src="" alt="Immagine" id="image-detail">
+        <p id="image-info"></p>
+        <button onclick="closeDetails()">Chiudi</button>
+    </div>
+
+    <script>
+        function showDetails(imgElement) {
+            const details = document.querySelector('.image-details');
+            const overlay = document.querySelector('.overlay');
+            const imgDetail = document.getElementById('image-detail');
+            const imgInfo = document.getElementById('image-info');
+
+            imgDetail.src = imgElement.src;
+            const percorso = imgElement.dataset.percorso;
+            const dataModifica = imgElement.dataset.modifica;
+            imgInfo.innerHTML = `<strong>Percorso:</strong> ${percorso}<br><strong>Modificata:</strong> ${dataModifica}`;
+
+            details.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        function closeDetails() {
+            document.querySelector('.image-details').style.display = 'none';
+            document.querySelector('.overlay').style.display = 'none';
+        }
+
+        document.querySelectorAll('.duplicate-image').forEach(img => {
+            img.addEventListener('click', () => showDetails(img));
+        });
+
+        document.getElementById('scroll-to-bottom-button').addEventListener('click', function() {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        });
+
+        document.getElementById('delete-duplicates-button').addEventListener('click', function() {
+            if (confirm('Sei sicuro di voler eliminare tutte le immagini duplicate? Questa operazione è irreversibile.')) {
+                window.location.href = '{{ url_for("eliminar_duplicatas_route") }}';
+            }
+        });
+
+
+    </script>
+</body>
+</html>

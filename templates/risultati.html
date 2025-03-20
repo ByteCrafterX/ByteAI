@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Risultati della Ricerca</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Link para o CSS unificado -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+  <!-- Fonte Orbitron -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body class="light">
+  <!-- Spinner inicial -->
+  <div id="loading-overlay" style="display:flex;">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Cabeçalho com menu retrátil -->
+  <header>
+    <div class="container">
+      <div class="logo-wrapper">
+        <a href="{{ url_for('index') }}" class="logo-link">
+          <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+          <span class="brand-name">Studio Elle Ricerca Immagini</span>
+        </a>
+      </div>
+
+      <!-- Botão hamburguer -->
+      <button id="menu-toggle" class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Navegação principal -->
+      <nav id="main-nav">
+        <ul>
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+          <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+          <li><a href="{{ url_for('about') }}">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <h1 style="text-align:center; margin-top:20px;">Risultati della Ricerca</h1>
+
+  <div class="gallery" id="gallery">
+    {% for img in immagini %}
+      <img
+        class="lazy-image"
+        data-src="/miniatura/{{ img.percorso_url | urlencode }}"
+        alt="Immagine"
+        data-percorso-originale="{{ img.percorso }}"
+        data-percorso-relativo="{{ img.percorso_url }}"
+        onclick="showDetails({{ loop.index0 }})"
+      >
+    {% endfor %}
+  </div>
+
+  <div id="sentinel"></div>
+  <div class="no-results" style="display:none;">Nessuna immagine trovata.</div>
+
+  <!-- Overlay e modal -->
+  <div class="overlay" onclick="closeDetails()"></div>
+  <div class="image-details">
+    <div class="image-details-content">
+      <div class="image-preview">
+        <img src="" alt="Immagine" id="image-detail">
+        <p id="image-info"></p>
+
+        <!-- Botão que aparece no mobile para exibir metadados -->
+        <button id="toggle-info-btn" class="mobile-info-button" onclick="toggleInfo()">Altre Informazioni</button>
+      </div>
+
+      <!-- Metadados -->
+      <div class="metadata-container" id="metadata-container">
+        <label>
+          <input type="checkbox" id="esclusiva-checkbox">
+          Immagine Esclusiva
+        </label>
+        <label for="data-scadenza">Data di Scadenza (es. 2024-12-31):</label>
+        <input type="date" id="data-scadenza">
+        <label for="note-immagine"><strong>Note:</strong></label>
+        <textarea id="note-immagine" rows="5"></textarea>
+
+        <button onclick="salvaMetadatiImmagine()">Salva Metadati</button>
+        <button style="margin-top:10px;" onclick="closeDetails()">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading infinito -->
+  <div id="loading" style="display:none;">
+    <p>Caricamento in corso...</p>
+  </div>
+
+  <!-- Rodapé -->
+  <div class="footer">
+    <p>&copy; 2025 Powered by FuturaForma. Tutti i diritti riservati.</p>
+  </div>
+
+  <script>
+    // MENU RETRÁTIL
+    const menuToggle = document.getElementById('menu-toggle');
+    const mainNav = document.getElementById('main-nav');
+    menuToggle.addEventListener('click', () => {
+      mainNav.classList.toggle('open');
+    });
+
+    console.log("[DEBUG] Carregando risultati.html script...");
+
+    let currentIndex = {{ immagini|length }};
+    let totalResults = {{ total_resultados }};
+    let perPage = 100;
+    const gallery = document.getElementById('gallery');
+    let imagesData = [];
+    let currentImageIndex = null;
+    let infoImmagini = {};
+
+    // 1) Busca info_immagini do servidor
+    function fetchInfoImmagini() {
+        console.log("[DEBUG] Chamando /info_immagini para carregar metadados...");
+        fetch("{{ url_for('info_immagini') }}")
+            .then(res => res.json())
+            .then(data => {
+                console.log("[DEBUG] Recebemos infoImmagini:", data);
+                infoImmagini = data;
+                applicaEsclusivaSuGalleria();
+            })
+            .catch(err => console.error("[DEBUG] Errore nel caricare info_immagini:", err));
+    }
+
+    // 2) Aplica 'esclusiva' conforme scadença
+    function applicaEsclusivaSuGalleria() {
+        const allImgs = document.querySelectorAll('.gallery img');
+        const oggi = new Date().toISOString().split('T')[0];
+        allImgs.forEach(img => {
+            const pathOriginale = img.dataset.percorsoOriginale;
+            const info = infoImmagini[pathOriginale];
+            if (info && info.esclusiva) {
+                const scadenza = info.scadenza || "";
+                if (!scadenza || scadenza >= oggi) {
+                    img.classList.add('esclusiva');
+                } else {
+                    img.classList.remove('esclusiva');
+                }
+            } else {
+                img.classList.remove('esclusiva');
+            }
+        });
+    }
+
+    // 3) Cria o elemento <img> para cada resultado
+    function createImageElement(imgData, index) {
+        const imgElement = document.createElement('img');
+        imgElement.dataset.src = '/miniatura/' + encodeURIComponent(imgData.percorso_url);
+        imgElement.alt = 'Immagine';
+        imgElement.dataset.percorsoOriginale = imgData.percorso;
+        imgElement.dataset.percorsoRelativo = imgData.percorso_url;
+        imgElement.dataset.index = index;
+        imgElement.classList.add('lazy-image');
+        imgElement.onclick = () => showDetails(index);
+        return imgElement;
+    }
+
+    // 4) Lazy loading
+    function observeImages() {
+        console.log("[DEBUG] observeImages() chamado.");
+        const lazyImages = document.querySelectorAll('.lazy-image');
+        const config = { rootMargin: '50px 0px', threshold: 0.01 };
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.onload = () => {
+                        img.classList.add('loaded');
+                    };
+                    img.classList.remove('lazy-image');
+                    observer.unobserve(img);
+                }
+            });
+        }, config);
+        lazyImages.forEach(image => {
+            imageObserver.observe(image);
+        });
+    }
+
+    // 5) Infinite Scroll
+    function loadImages() {
+        console.log("[DEBUG] loadImages() -> currentIndex:", currentIndex, "/", totalResults);
+        if (currentIndex >= totalResults) {
+            console.log("[DEBUG] Já carregamos todas as imagens. Retornando.");
+            return;
+        }
+        document.getElementById('loading').style.display = 'block';
+
+        fetch('/carregar_mais_imagens', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 'current_index': currentIndex, 'per_page': perPage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("[DEBUG] /carregar_mais_imagens resposta:", data);
+            data.imagens.forEach((imgData) => {
+                imagesData.push(imgData);
+                const index = imagesData.length - 1;
+                const imgElement = createImageElement(imgData, index);
+                gallery.appendChild(imgElement);
+            });
+            currentIndex += data.imagens.length;
+            document.getElementById('loading').style.display = 'none';
+            observeImages();
+            applicaEsclusivaSuGalleria();
+
+            if (currentIndex >= totalResults) {
+                const sentinel = document.getElementById('sentinel');
+                if (sentinel) {
+                    sentinel.remove();
+                }
+                const endMessage = document.createElement('p');
+                endMessage.textContent = 'Non ci sono più immagini da caricare.';
+                endMessage.style.textAlign = 'center';
+                gallery.appendChild(endMessage);
+            }
+        })
+        .catch(error => {
+            console.error('[DEBUG] Errore:', error);
+            document.getElementById('loading').style.display = 'none';
+        });
+    }
+
+    // 6) Observa o sentinel
+    function observeSentinel() {
+        console.log("[DEBUG] observeSentinel() chamado.");
+        const sentinel = document.getElementById('sentinel');
+        const observerOptions = { root: null, rootMargin: '200px', threshold: 0 };
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    console.log("[DEBUG] sentinel isIntersecting -> loadImages()");
+                    loadImages();
+                }
+            });
+        }, observerOptions);
+        observer.observe(sentinel);
+    }
+
+    // 7) window.onload
+    window.onload = function() {
+        console.log("[DEBUG] window.onload disparou. Iniciando setup...");
+
+        const initialImages = document.querySelectorAll('.gallery img');
+        initialImages.forEach((img, index) => {
+            const pathOriginale = img.dataset.percorsoOriginale;
+            const pathUrl = img.dataset.percorsoRelativo;
+            imagesData.push({ 'percorso': pathOriginale, 'percorso_url': pathUrl });
+            img.dataset.index = index;
+            img.onclick = () => showDetails(index);
+        });
+
+        observeImages();
+        observeSentinel();
+        fetchInfoImmagini();
+
+        // Oculta o overlay do spinner inicial
+        const loadingOverlay = document.getElementById('loading-overlay');
+        loadingOverlay.style.display = 'none';
+        console.log("[DEBUG] window.onload finalizado. Spinner ocultado.");
+    };
+
+    // 8) Modal: exibir detalhes
+    function showDetails(index) {
+        console.log("[DEBUG] showDetails() -> index=", index);
+
+        // EVITA abrirmos modal se não houver imagens ou se o índice é inválido
+        if (!imagesData.length) {
+          console.log("[DEBUG] Nenhuma imagem carregada, showDetails ignorado.");
+          return;
+        }
+        if (index < 0 || index >= imagesData.length) {
+          console.log("[DEBUG] Índice fora do range, showDetails ignorado.");
+          return;
+        }
+
+        currentImageIndex = index;
+        const imgData = imagesData[index];
+
+        const details = document.querySelector('.image-details');
+        const overlay = document.querySelector('.overlay');
+        const imgDetail = document.getElementById('image-detail');
+        const imgInfo = document.getElementById('image-info');
+
+        // Carrega imagem maior (resolução total)
+        imgDetail.src = '/immagini/' + encodeURIComponent(imgData.percorso_url);
+
+        const percorsoOriginale = imgData.percorso;
+        imgInfo.textContent = `Percorso: ${percorsoOriginale}`;
+
+        const info = infoImmagini[percorsoOriginale] || {};
+        document.getElementById('esclusiva-checkbox').checked = !!info.esclusiva;
+        document.getElementById('data-scadenza').value = info.scadenza || "";
+        document.getElementById('note-immagine').value = info.note || "";
+
+        details.style.display = 'block';
+        overlay.style.display = 'block';
+
+        // Breve timeout para o CSS conseguir aplicar a animação
+        setTimeout(() => {
+            details.classList.add('open');
+            overlay.classList.add('open');
+        }, 10);
+    }
+
+    // 9) Fechar modal
+    function closeDetails() {
+        console.log("[DEBUG] closeDetails() chamado");
+        const details = document.querySelector('.image-details');
+        const overlay = document.querySelector('.overlay');
+
+        details.classList.remove('open');
+        overlay.classList.remove('open');
+
+        setTimeout(() => {
+            details.style.display = 'none';
+            overlay.style.display = 'none';
+            currentImageIndex = null;
+
+            // Se estivermos no mobile e a metadata estiver aberta, fecha
+            const metadataDiv = document.getElementById('metadata-container');
+            metadataDiv.classList.remove('show-mobile');
+        }, 400);
+    }
+
+    // 10) Salvar Metadati
+    function salvaMetadatiImmagine() {
+        if (currentImageIndex === null) return;
+        const imgData = imagesData[currentImageIndex];
+        const percorsoOriginale = imgData.percorso;
+
+        const esclusiva = document.getElementById('esclusiva-checkbox').checked;
+        const scadenza = document.getElementById('data-scadenza').value.trim();
+        const note = document.getElementById('note-immagine').value.trim();
+
+        console.log("[DEBUG] Salvando metadados:", { esclusiva, scadenza, note });
+
+        fetch("{{ url_for('salva_info_immagine') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 'percorso': percorsoOriginale, 'esclusiva': esclusiva, 'scadenza': scadenza, 'note': note })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                infoImmagini[percorsoOriginale] = { esclusiva, scadenza, note };
+                applicaEsclusivaSuGalleria();
+                alert("Metadati salvati con successo.");
+            } else {
+                alert("Errore nel salvare i metadati: " + (data.msg || ''));
+            }
+        })
+        .catch(err => {
+            console.error("Errore nel salvare metadati:", err);
+            alert("Errore nel salvare metadati, verifica console.");
+        });
+    }
+
+    // 11) Função para exibir/esconder metadados no mobile
+    function toggleInfo() {
+        const metadataDiv = document.getElementById('metadata-container');
+        metadataDiv.classList.toggle('show-mobile');
+    }
+
+    // Navegação por setas (opcional)
+    function nextImage() {
+        if (currentImageIndex !== null && currentImageIndex < imagesData.length - 1) {
+            showDetails(currentImageIndex + 1);
+        }
+    }
+    function prevImage() {
+        if (currentImageIndex !== null && currentImageIndex > 0) {
+            showDetails(currentImageIndex - 1);
+        }
+    }
+    document.addEventListener('keydown', (event) => {
+        if (currentImageIndex !== null) {
+            if (event.key === 'ArrowRight') {
+                nextImage();
+            } else if (event.key === 'ArrowLeft') {
+                prevImage();
+            } else if (event.key === 'Escape') {
+                closeDetails();
+            }
+        }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+[2025-02-21 22:40:25,274] DEBUG in app: [DEBUG] __main__ -> Chamando start_scheduler() para APScheduler.
+[2025-02-21 22:40:25,275] DEBUG in app: start_scheduler() chamado. Carregando pianificazione...
+[2025-02-21 22:40:25,275] DEBUG in app: Programando reindex com day_of_week=mon,tue,wed,thu,fri,sat,sun, hour=15, minute=57
+[2025-02-21 22:40:25,285] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-02-21 22:40:25,285] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-02-21 22:40:49,492] DEBUG in app: Iniciando busca (TEXTO): ' cherry blossom', categoria='ORIENTALS'
+[2025-02-21 22:40:56,325] DEBUG in app: Busca retornou 100 imagens, total: 23548
+[2025-02-21 22:45:07,512] DEBUG in app: Iniciando busca (TEXTO): ' tapestry floral Art Nouveau William Morris Damask honey suckle Liberty Vintage retro style Baroque Rococo Victorian ornamental Fleur de Lis Toile de Jouy antique fabric', categoria='FURNITURE & TAPESTRIES'
+[2025-02-21 22:45:07,975] DEBUG in app: Busca retornou 100 imagens, total: 23548
+[2025-02-21 22:45:46,190] DEBUG in app: Iniciando busca (TEXTO): '', categoria='DOTS'
+[2025-02-21 22:45:46,517] DEBUG in app: Busca retornou 100 imagens, total: 23548
+[2025-02-21 22:47:04,113] DEBUG in app: Iniciando busca (TEXTO): 'Zebra', categoria=''
+[2025-02-21 22:47:04,384] DEBUG in app: Busca retornou 100 imagens, total: 23548
+[2025-02-21 22:48:04,538] DEBUG in app: Iniciando busca (TEXTO): '', categoria='TROPICALS'
+[2025-02-21 22:48:04,868] DEBUG in app: Busca retornou 100 imagens, total: 23548
+[2025-02-21 22:48:38,804] DEBUG in app: Iniciando busca (TEXTO): ' African tribal', categoria='ETHNICS'
+[2025-02-21 22:48:39,173] DEBUG in app: Busca retornou 100 imagens, total: 23548
+[2025-02-21 22:49:35,924] DEBUG in app: Iniciando busca (TEXTO): '', categoria='ABSTRACTS'
+[2025-02-21 22:49:36,292] DEBUG in app: Busca retornou 100 imagens, total: 23548

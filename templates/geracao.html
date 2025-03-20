@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Geração de Imagem</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+                <span class="brand-name">Studio Elle - Geração</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('logout') }}" style="color:red;">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2>Gerar Imagens com IA</h2>
+
+        <form method="POST">
+            <label for="prompt">Prompt:</label>
+            <input type="text" id="prompt" name="prompt" placeholder="Descreva a imagem..." required>
+
+            <button type="submit">Gerar Imagem</button>
+        </form>
+
+        {% if generated_image %}
+            <hr>
+            <h3>Imagem Gerada:</h3>
+            <img src="{{ generated_image }}" alt="Imagem Gerada" style="max-width: 500px; border: 1px solid #ccc;">
+        {% endif %}
+    </div>
+</body>
+</html>

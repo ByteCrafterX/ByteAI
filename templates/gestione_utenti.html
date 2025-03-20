@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestione Utenti</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Folha de estilo principal -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Fonte Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+                <span class="brand-name">Studio Elle Ricerca Immagini</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                    <li><a href="{{ url_for('logout') }}" style="color:red;">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- TÍTULO PRINCIPAL -->
+    <h1 style="text-align:center; margin-top:20px;">Gestione Utenti</h1>
+
+    <!-- CONTAINER PRINCIPAL -->
+    <div class="container">
+        <!-- MENSAGENS FLASH -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- CONTEÚDO -->
+        <div class="content" style="margin-top:20px;">
+            <!-- FORMULÁRIO PARA ADICIONAR NOVO USUÁRIO -->
+            <form action="{{ url_for('gestione_utenti') }}" method="post" class="card" style="margin-bottom:30px;">
+                <h2 style="margin-top:0;">Aggiungi Nuovo Utente</h2>
+                <label for="nome_nuovo">Nome Utente</label>
+                <input type="text" id="nome_nuovo" name="nome_nuovo" placeholder="Inserisci il nome utente" required>
+
+                <label for="password_nuova">Password</label>
+                <input type="password" id="password_nuova" name="password_nuova" placeholder="Inserisci la password" required>
+
+                <button type="submit" class="button-blue" style="margin-top:10px;">Aggiungi</button>
+            </form>
+
+            <h2>Utenti Registrati</h2>
+            <table class="table-users" style="width:100%; border-collapse:collapse; margin-top:10px;">
+                <thead>
+                    <tr style="background-color: #f0f0f0;">
+                        <th style="padding: 10px; text-align:left;">Nome Utente</th>
+                        <th style="padding: 10px; text-align:left;">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for utente in utenti %}
+                    <tr>
+                        <td style="padding: 8px; border-bottom:1px solid #ccc;">
+                            {{ utente.username }}
+                        </td>
+                        <td style="padding: 8px; border-bottom:1px solid #ccc;">
+                            <!-- Botão de remover usuário -->
+                            <form action="{{ url_for('rimuovi_utente') }}" method="post" style="display:inline;">
+                                <input type="hidden" name="username_rimuovere" value="{{ utente.username }}">
+                                <button type="submit" class="button-red"
+                                        onclick="return confirm('Sei sicuro di voler rimuovere questo utente?')">
+                                    Rimuovi
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

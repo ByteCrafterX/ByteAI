@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Studio Elle - Logs</title>
+    <!-- Meta tag per responsività -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Link para o CSS unificado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <!-- Fonte Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+                <span class="brand-name">Studio Elle Ricerca Immagini</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Logs di Sistema</h1>
+        <form method="get" action="{{ url_for('view_logs') }}">
+            <label for="date">Seleziona Data (YYYY-MM-DD):</label>
+            <input type="text" id="date" name="date" value="{{ date }}" placeholder="2025-02-18">
+
+            <label for="search">Ricerca:</label>
+            <input type="text" id="search" name="q" value="{{ search_term }}" placeholder="Termine di ricerca">
+
+            <button type="submit" class="button-blue">Cerca</button>
+        </form>
+
+        <h2>Statistiche</h2>
+        <ul>
+            <li>Total Log Entries: {{ stats.total }}</li>
+            <li>DEBUG: {{ stats.DEBUG }}</li>
+            <li>INFO: {{ stats.INFO }}</li>
+            <li>WARNING: {{ stats.WARNING }}</li>
+            <li>ERROR: {{ stats.ERROR }}</li>
+        </ul>
+
+        <h2>Log Entries</h2>
+        <div id="log-box">
+            {% if logs %}
+                {% for entry in logs %}
+                    <p>{{ entry }}</p>
+                {% endfor %}
+            {% else %}
+                <p>Nessun log trovato per la data selezionata.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

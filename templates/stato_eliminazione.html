@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Eliminazione delle Immagini Duplicate</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </nav>
+
+        </div>
+    </header>
+    <div class="container">
+        <h1>Eliminazione delle Immagini Duplicate</h1>
+        <div id="progress-container">
+            <h3>Avanzamento dell'Eliminazione</h3>
+            <div id="progress-bar">
+                <div id="progress-bar-fill"></div>
+            </div>
+            <div id="progress-percentage">0%</div>
+            <h3>Log</h3>
+            <div id="log-box"></div>
+        </div>
+    </div>
+    <script>
+        // Função para atualizar a barra de progresso e o log
+        function aggiornaProgresso() {
+            fetch('/stato_eliminazione')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.percentuale !== undefined) {
+                        document.getElementById('progress-bar-fill').style.width = data.percentuale + '%';
+                        document.getElementById('progress-percentage').innerText = data.percentuale + '%';
+
+                        let logBox = document.getElementById('log-box');
+                        logBox.innerHTML = '';
+                        data.log.forEach(function(messaggio) {
+                            let p = document.createElement('p');
+                            p.textContent = messaggio;
+                            logBox.appendChild(p);
+                        });
+                        logBox.scrollTop = logBox.scrollHeight;
+
+                        // Redireciona após a conclusão
+                        if (data.completed) {
+                            setTimeout(function() {
+                                window.location.href = '{{ url_for("stato_reindicizzazione_page") }}';
+                            }, 2000);
+                        }
+                    }
+                })
+                .catch(error => console.error('Errore durante il recupero dello stato di avanzamento:', error));
+        }
+
+        window.onload = function() {
+            setInterval(aggiornaProgresso, 1000);
+        };
+
+
+    </script>
+</body>
+</html>

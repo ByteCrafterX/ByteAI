@@ -1,0 +1,15 @@
+[2025-03-09 14:53:07,271] DEBUG in app: [DEBUG] __main__ -> Chamando start_scheduler() para APScheduler.
+[2025-03-09 14:53:07,271] DEBUG in app: start_scheduler() chamado. Carregando pianificazione...
+[2025-03-09 14:53:07,271] DEBUG in app: Programando reindex com day_of_week=mon,tue,wed,thu,fri,sat,sun, hour=22, minute=21
+[2025-03-09 14:53:07,294] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-03-09 14:53:07,294] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-03-09 14:53:20,305] DEBUG in app: Iniciando busca (TEXTO): '', categoria='STRIPES'
+[2025-03-09 14:53:21,042] DEBUG in app: Busca retornou 100 imagens, total: 23547
+[2025-03-09 14:55:01,287] DEBUG in app: Iniciando busca (TEXTO): '', categoria='STRIPES'
+[2025-03-09 14:55:01,580] DEBUG in app: Busca retornou 100 imagens, total: 23617
+[2025-03-09 14:55:06,285] DEBUG in app: Iniciando busca (TEXTO): '', categoria='TROPICALS'
+[2025-03-09 14:55:06,627] DEBUG in app: Busca retornou 100 imagens, total: 23617
+[2025-03-09 14:56:37,756] DEBUG in app: Iniciando busca (TEXTO): 'art nuvoe', categoria=''
+[2025-03-09 14:56:38,046] DEBUG in app: Busca retornou 100 imagens, total: 23546
+[2025-03-09 14:57:11,200] DEBUG in app: Iniciando busca (TEXTO): 'story', categoria=''
+[2025-03-09 14:57:11,517] DEBUG in app: Busca retornou 100 imagens, total: 23546

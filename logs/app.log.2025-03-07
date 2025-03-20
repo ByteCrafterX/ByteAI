@@ -1,0 +1,2 @@
+[2025-03-07 15:57:00,001] DEBUG in app: job_reindicizza_programmata() disparado pelo APScheduler!
+[2025-03-07 15:57:00,002] DEBUG in app: Iniciando indicizza_immagini (reindex programada), dirs= ['/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)']

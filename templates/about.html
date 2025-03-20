@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>ByteAI ABOUT</title>
+    <!-- Meta tag para responsividade -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Link para o arquivo CSS unificado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <!-- Importação da fonte Orbitron (já está no styles.css, mas sem problemas) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+                <span class="brand-name">Studio Elle Ricerca Immagini</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Benvenuti a ByteAI</h1>
+        <p>
+            ByteAI è un avanzato motore di ricerca per immagini che utilizza l'intelligenza artificiale per fornire risultati precisi e pertinenti. Progettato per aiutare professionisti, artisti e appassionati, ByteAI consente di trovare immagini in base a descrizioni testuali e categorie specifiche.
+        </p>
+        <h2>Come Funziona</h2>
+        <p>
+            Il nostro motore di ricerca sfrutta modelli di apprendimento automatico per analizzare e indicizzare le immagini presenti nel tuo archivio. Attraverso l'elaborazione del linguaggio naturale e il riconoscimento di pattern visivi, ByteAI è in grado di comprendere il contenuto delle immagini e associarle alle descrizioni fornite.
+        </p>
+        <h2>Caratteristiche Principali</h2>
+        <ul>
+            <li><strong>Ricerca Avanzata:</strong> Trova immagini utilizzando descrizioni dettagliate o parole chiave.</li>
+            <li><strong>Categorie Personalizzate:</strong> Filtra i risultati in base a categorie specifiche per affinare la ricerca.</li>
+            <li><strong>Interfaccia Intuitiva:</strong> Un design semplice e pulito per un'esperienza utente ottimale.</li>
+            <li><strong>Prestazioni Elevate:</strong> Indicizzazione rapida e risultati in tempo reale grazie all'uso di tecnologie all'avanguardia.</li>
+        </ul>
+        <h2>Contattaci</h2>
+        <p>
+            Sviluppato da <strong>Marco Alecsander</strong>. Siamo sempre aperti a suggerimenti e feedback per migliorare ByteAI. Se desideri condividere le tue idee ou hai bisogno di assistenza, non esitare a contattarci via email a
+            <a href="mailto:marcoalecsander@gmail.com">marcoalecsander@gmail.com</a>.
+        </p>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2025 Powered by FuturaForma. Tutti i diritti riservati.</p>
+    </div>
+</body>
+</html>
