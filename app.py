@@ -1710,7 +1710,6 @@ def indicizza_generativa():
     # Exemplo: rodar alguma rotina de "treino LoRA" nessas dirs_ativos...
     logger.info(f"[GEN] Indexacao/treino gerativo com as dirs = {dirs_ativos}")
     flash(f"Indexazione incrementale (generativa) avviata per {len(dirs_ativos)} directory.", "info")
-    # TODO: chame seu script de treino, ou algo do tipo, aqui.
 
     return redirect(url_for('configurazione_generativa'))
 
