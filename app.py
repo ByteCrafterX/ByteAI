@@ -1606,23 +1606,51 @@ except Exception as e:
 @app.route('/geracao', methods=['GET', 'POST'])
 @login_required
 def geracao():
+    # Função para listar últimas 12 imagens geradas no "static/generated"
+    def ultimas_imagens_geradas(n=12):
+        gen_path = os.path.join("static", "generated")
+        if not os.path.isdir(gen_path):
+            return []
+        # Pega todos os .png
+        files = [f for f in os.listdir(gen_path) if f.lower().endswith('.png')]
+        # Ordena por data de modificação desc
+        files = sorted(files, key=lambda x: os.path.getmtime(os.path.join(gen_path, x)), reverse=True)
+        return files[:n]
+
     if request.method == 'POST':
         if not pipe:
             flash('Il modello di generazione non è caricato oppure si è verificato un errore.', 'error')
-            return render_template('geracao.html', generated_image=None)
+            return render_template('geracao.html', generated_image=None, ultimas_imagens=ultimas_imagens_geradas())
 
         prompt = request.form.get('prompt', '').strip()
+        risoluzione = request.form.get('risoluzione', '512x512').strip()
+
         if not prompt:
             flash('Inserisci un prompt valido.', 'error')
-            return render_template('geracao.html', generated_image=None)
+            return render_template('geracao.html', generated_image=None, ultimas_imagens=ultimas_imagens_geradas())
 
+        # Parse da resolucao
+        # Exemplo "1920x1080" => h=1080, w=1920
         try:
+            w_str, h_str = risoluzione.lower().split('x')
+            width = int(w_str)
+            height = int(h_str)
+        except:
+            # fallback
+            width, height = 512, 512
+
+        # Gera a imagem
+        try:
+            import torch
             if device == "cuda":
                 with torch.autocast("cuda"):
-                    image = pipe(prompt).images[0]
+                    result = pipe(prompt, height=height, width=width, num_inference_steps=30)
+                    image = result.images[0]
             else:
-                image = pipe(prompt).images[0]
+                result = pipe(prompt, height=height, width=width, num_inference_steps=30)
+                image = result.images[0]
 
+            # Salva
             import time, random, string
             random_str = ''.join(random.choice(string.ascii_lowercase) for _ in range(6))
             filename = f"generated_{int(time.time())}_{random_str}.png"
@@ -1632,15 +1660,20 @@ def geracao():
             image.save(output_path)
 
             flash('Immagine generata con successo!', 'success')
-            return render_template('geracao.html',
-                                   generated_image=url_for('static', filename=f"generated/{filename}"))
+            return render_template(
+                'geracao.html',
+                generated_image=url_for('static', filename=f"generated/{filename}"),
+                ultimas_imagens=ultimas_imagens_geradas()
+            )
         except Exception as e:
-            logger.error(f"Erro gerando immagine: {e}")
+            logger.error(f"Erro generando immagine: {e}")
             flash(f"Errore durante la generazione dell'immagine: {e}", 'error')
-            return render_template('geracao.html', generated_image=None)
+            return render_template('geracao.html', generated_image=None, ultimas_imagens=ultimas_imagens_geradas())
+
     else:
         # GET
-        return render_template('geracao.html', generated_image=None)
+        return render_template('geracao.html', generated_image=None, ultimas_imagens=ultimas_imagens_geradas())
+
 
 
 # ============ NOVA SEÇÃO: CONFIGURAÇÃO DA GENERAÇÃO (LoRA, etc.) ============

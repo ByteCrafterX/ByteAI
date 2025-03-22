@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Geração de Imagem</title>
+    <title>Generazione di Immagini</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -10,7 +10,7 @@
         <div class="container">
             <a href="{{ url_for('index') }}">
                 <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
-                <span class="brand-name">Studio Elle - Geração</span>
+                <span class="brand-name">Studio Elle - Generativa</span>
             </a>
             <nav>
                 <ul>
@@ -21,21 +21,133 @@
         </div>
     </header>
 
-    <div class="container">
-        <h2>Gerar Imagens com IA</h2>
+    <main class="container" style="margin-top: 30px;">
+        <h2>Generazione di Immagini (IA)</h2>
 
-        <form method="POST">
-            <label for="prompt">Prompt:</label>
-            <input type="text" id="prompt" name="prompt" placeholder="Descreva a imagem..." required>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="messages">
+            {% for category, message in messages %}
+              <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
 
-            <button type="submit">Gerar Imagem</button>
+        <!-- Form para gerar imagem -->
+        <form id="generate-form" method="POST" onsubmit="return startGeneration()">
+            <label for="prompt">Inserisci il Prompt:</label>
+            <input type="text" id="prompt" name="prompt" placeholder="Descrivi l'immagine..." required>
+
+            <label for="risoluzione-select">Seleziona la risoluzione:</label>
+            <select id="risoluzione-select" name="risoluzione" required>
+                <option value="512x512">512 x 512</option>
+                <option value="768x768">768 x 768</option>
+                <option value="1024x1024">1024 x 1024</option>
+                <option value="1920x1080">1920 x 1080 (Full HD)</option>
+            </select>
+
+            <button type="submit" class="button-blue" style="width:100%; margin-top:15px;">
+                Genera Immagine
+            </button>
         </form>
 
-        {% if generated_image %}
-            <hr>
-            <h3>Imagem Gerada:</h3>
-            <img src="{{ generated_image }}" alt="Imagem Gerada" style="max-width: 500px; border: 1px solid #ccc;">
-        {% endif %}
+        <!-- Barra de Progresso -->
+        <div id="generation-progress" style="display:none; margin-top: 30px;">
+            <div id="progress-bar" style="width:100%; background:#ddd; height:22px; border-radius:5px; overflow:hidden; margin-bottom:10px;">
+                <div id="progress-fill" style="width:0%; background:#4A90E2; height:100%; transition: width 0.3s;"></div>
+            </div>
+            <p id="progress-text" style="text-align:center; font-weight:bold;">Preparando la magia...</p>
+        </div>
+
+        <!-- Exibição da imagem gerada -->
+        <div id="image-result" style="margin-top:40px; text-align:center;">
+            {% if generated_image %}
+                <h3>Immagine Generata:</h3>
+                <img src="{{ generated_image }}" alt="Immagine Generata" style="max-width: 70%; border: 1px solid #ccc; border-radius:8px;">
+            {% endif %}
+        </div>
+
+        <!-- Galeria das últimas imagens geradas -->
+        <hr style="margin:40px 0;">
+        <h3>Galleria delle Ultime Immagini Generate</h3>
+        <div class="gallery" id="generated-gallery">
+            {% for img in ultimas_imagens %}
+            <img
+                style="cursor:pointer; width:200px; margin:5px; border-radius:8px;"
+                src="{{ url_for('static', filename='generated/' ~ img) }}"
+                alt="img generata"
+                onclick="viewFullImage('{{ url_for('static', filename='generated/' ~ img) }}')"
+            >
+            {% endfor %}
+            {% if not ultimas_imagens %}
+            <p style="text-align:center; color:#666;">Nessuna immagine generata di recente.</p>
+            {% endif %}
+        </div>
+
+    </main>
+
+    <!-- Overlay simples pra visualização fullscreen -->
+    <div id="overlay-full" class="overlay" style="display:none;" onclick="closeFullImage()">
+        <img id="overlay-img" style="max-width:90%; max-height:90%; margin:auto; display:block; border-radius:8px;">
     </div>
+
+    <script>
+        function startGeneration() {
+            // Exibir barra de progresso
+            document.getElementById('generation-progress').style.display = 'block';
+            document.getElementById('progress-fill').style.width = '0%';
+            document.getElementById('progress-text').textContent = 'Preparando la magia...';
+
+            // Iniciar checagem do progresso
+            checkProgress();
+            return true; // prosseguir com o submit
+        }
+
+        function checkProgress() {
+            const phrases = [
+                "Stiamo quasi arrivando...",
+                "Un attimo, stiamo raccogliendo i pixel...",
+                "La creatività è in corso...",
+                "Applica i colori... Eccellente!",
+                "Solo un altro pizzico di pazienza...",
+                "Piccoli tocchi di arte digitale...",
+                "Ancora un momento, quasi finito...",
+                "Ti porteremo un capolavoro!",
+                "Poche pennellate finali..."
+            ];
+            let phraseIndex = 0;
+            // Atualizar progress de 0 a 100% num loop fictício
+            let progress = 0;
+
+            const intervalId = setInterval(() => {
+                progress += 3;
+                if (progress > 100) progress = 100;
+
+                document.getElementById('progress-fill').style.width = progress + '%';
+
+                // Muda frase de vez em quando
+                if (progress < 100) {
+                    document.getElementById('progress-text').textContent = phrases[phraseIndex];
+                } else {
+                    document.getElementById('progress-text').textContent = "Completato!";
+                    clearInterval(intervalId);
+                }
+
+                phraseIndex = (phraseIndex + 1) % phrases.length;
+            }, 1200); // a cada 1.2s muda frase
+        }
+
+        function viewFullImage(src) {
+            const overlay = document.getElementById('overlay-full');
+            const img = document.getElementById('overlay-img');
+            img.src = src;
+            overlay.style.display = 'flex';
+        }
+        function closeFullImage() {
+            const overlay = document.getElementById('overlay-full');
+            overlay.style.display = 'none';
+        }
+    </script>
 </body>
 </html>
