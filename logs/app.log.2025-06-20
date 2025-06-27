@@ -1,0 +1,83 @@
+[2025-06-20 15:58:04,770] DEBUG in app: Alias geracao → /geracao
+[2025-06-20 15:58:04,773] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-20 15:58:04,774] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-20 15:58:04,774] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-20 15:58:04,774] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-20 15:58:05,180] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-20 15:58:05,180] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-20 15:58:05,180] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-20 15:58:05,180] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-20 15:58:05,181] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-20 15:58:05,181] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-20 15:58:05,199] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-20 15:58:05,199] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-20 15:58:05,222] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-20 15:58:05,222] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-20 16:03:16,764] ERROR in app: Errore durante la ricerca: value cannot be converted to type at::Half without overflow
+[2025-06-20 16:03:16,764] ERROR in app: Errore durante la ricerca: value cannot be converted to type at::Half without overflow
+[2025-06-20 16:06:02,378] DEBUG in app: Alias geracao → /geracao
+[2025-06-20 16:06:02,378] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-20 16:06:02,378] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-20 16:06:02,379] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-20 16:06:02,379] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-20 16:06:02,715] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-20 16:06:02,715] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-20 16:06:02,715] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-20 16:06:02,715] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-20 16:06:02,715] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-20 16:06:02,715] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-20 16:06:02,727] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-20 16:06:02,727] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-20 16:06:02,747] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-20 16:06:02,747] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-20 16:16:03,765] ERROR in app: Errore durante l'indicizzazione: Cannot copy out of meta tensor; no data! Please use torch.nn.Module.to_empty() instead of torch.nn.Module.to() when moving module from meta to a different device.
+[2025-06-20 16:16:03,765] ERROR in app: Errore durante l'indicizzazione: Cannot copy out of meta tensor; no data! Please use torch.nn.Module.to_empty() instead of torch.nn.Module.to() when moving module from meta to a different device.
+[2025-06-20 16:20:43,927] DEBUG in app: Alias geracao → /geracao
+[2025-06-20 16:20:43,928] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-20 16:20:43,928] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-20 16:20:43,929] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-20 16:20:43,929] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-20 16:20:44,269] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-20 16:20:44,269] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-20 16:20:44,270] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-20 16:20:44,270] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-20 16:20:44,270] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-20 16:20:44,270] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-20 16:20:44,280] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-20 16:20:44,280] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-20 16:20:44,298] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-20 16:20:44,298] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-20 16:25:20,739] ERROR in app: Errore durante la ricerca: value cannot be converted to type at::Half without overflow
+[2025-06-20 16:25:20,739] ERROR in app: Errore durante la ricerca: value cannot be converted to type at::Half without overflow
+[2025-06-20 16:46:40,629] DEBUG in app: Alias geracao → /geracao
+[2025-06-20 16:46:40,629] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-20 16:46:40,630] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-20 16:46:40,630] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-20 16:46:40,631] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-20 16:46:40,983] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-20 16:46:40,983] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-20 16:46:40,984] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-20 16:46:40,984] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-20 16:46:40,984] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-20 16:46:40,984] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-20 16:46:40,996] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-20 16:46:40,996] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-20 16:46:41,022] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-20 16:46:41,022] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-20 16:50:03,306] ERROR in app: Errore durante la ricerca: value cannot be converted to type at::Half without overflow
+[2025-06-20 16:50:03,306] ERROR in app: Errore durante la ricerca: value cannot be converted to type at::Half without overflow
+[2025-06-20 17:04:50,647] DEBUG in app: Alias geracao → /geracao
+[2025-06-20 17:04:50,647] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-20 17:04:50,647] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-20 17:04:50,648] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-20 17:04:50,648] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-20 17:04:51,053] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-20 17:04:51,053] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-20 17:04:51,053] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-20 17:04:51,053] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-20 17:04:51,054] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-20 17:04:51,054] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-20 17:04:51,070] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-20 17:04:51,070] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-20 17:04:51,100] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-20 17:04:51,100] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...

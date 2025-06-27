@@ -1,20 +1,126 @@
-import logging
+import os, threading, json, subprocess, pickle, random, tempfile
+import unicodedata, re, logging, warnings
+from collections import Counter
+from io import BytesIO
+from urllib.parse import unquote
 from logging.handlers import TimedRotatingFileHandler
-import os
-import threading
-import json
-import subprocess
-import pickle
+from geracao import geracao_bp, _get_pipe   #  ←  IMPORTANTE!
+threading.Thread(target=_get_pipe, daemon=True).start()
+
 import numpy as np
 import faiss
 from PIL import Image
-from io import BytesIO
-import zipfile
-import tempfile
-import shutil
-import string
-import time
-import random
+from flask import (
+    Flask, flash, jsonify, redirect, render_template, request,
+    send_file, session, url_for
+)
+
+# -----------------------------------------------------------------------
+#  VARI AMBIENTE
+# -----------------------------------------------------------------------
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+os.environ["OMP_NUM_THREADS"]      = "1"
+os.environ["MKL_NUM_THREADS"]      = "1"
+
+# -----------------------------------------------------------------------
+#  LOG
+# -----------------------------------------------------------------------
+for noisy in (
+    "PIL", "urllib3", "pyvips", "diffusers", "transformers",
+    "huggingface_hub", "accelerate",
+):
+    logging.getLogger(noisy).setLevel(logging.WARNING)
+warnings.filterwarnings("ignore", category=UserWarning)
+
+log_dir = "logs"
+os.makedirs(log_dir, exist_ok=True)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = TimedRotatingFileHandler(
+    os.path.join(log_dir, "app.log"),
+    when="midnight", backupCount=30, encoding="utf-8"
+)
+handler.setFormatter(
+    logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
+)
+logger.addHandler(handler)
+
+
+
+# -----------------------------------------------------------------------
+# FLASK APP
+# -----------------------------------------------------------------------
+
+app = Flask(__name__)
+app.secret_key = "chiave_segreta_per_flash_message"
+
+# Registriamo il blueprint
+app.register_blueprint(geracao_bp)
+FILTERS_KEY = "filtros_galeria"          # nome na sessão
+STATS_FILE = "search_stats.json"
+stats_lock = threading.Lock()
+### HELPRS
+
+# -------------------------------------------------------------------
+OCR_META_FILE = "static/ocr_metadata.json"
+
+def carrega_ocr_metadata() -> dict[str, str]:
+    """Carrega (ou cria vazio) o arquivo JSON com texto/tag extraído via OCR."""
+    if not os.path.exists(OCR_META_FILE):
+        # garante que o arquivo exista para evitar erros de leitura
+        with open(OCR_META_FILE, "w", encoding="utf-8") as f:
+            json.dump({}, f, ensure_ascii=False, indent=2)
+        return {}
+    try:
+        with open(OCR_META_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error("Errore lendo %s: %s", OCR_META_FILE, e)
+        return {}
+def _load_stats():
+    if os.path.exists(STATS_FILE):
+        try:
+            with open(STATS_FILE, encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+import unicodedata, re
+def _norm(s: str) -> str:
+    s = unicodedata.normalize('NFKC', s)
+    s = s.casefold()
+    s = re.sub(r'[^\w\s]', ' ', s)
+    return re.sub(r'\s+', ' ', s).strip()
+
+
+
+def _save_stats(d):                         # d = Counter  (imagem->hits)
+    with stats_lock:
+        with open(STATS_FILE, "w", encoding="utf-8") as f:
+            json.dump(d, f, ensure_ascii=False, indent=2)
+
+
+# -----------------------------------------------------------------------
+#  *** ALIAS AUTOMATICI ***  per mantenere i vecchi url_for()
+# -----------------------------------------------------------------------
+
+def _crea_alias(bp):
+    for rule in list(app.url_map.iter_rules()):
+        if rule.endpoint.startswith(bp.name + "."):
+            alias = rule.endpoint.split(".", 1)[1]
+            if alias not in app.view_functions:
+                app.add_url_rule(
+                    rule.rule,
+                    endpoint=alias,
+                    view_func=app.view_functions[rule.endpoint],
+                    methods=list(rule.methods),
+                )
+                logger.debug("Alias %s → %s", alias, rule.rule)
+
+_crea_alias(geracao_bp)
+
+
 # ========================= CONFIGURAÇÃO DO LOGGER =========================
 log_dir = "logs"
 if not os.path.exists(log_dir):
@@ -23,6 +129,7 @@ if not os.path.exists(log_dir):
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+from logging.handlers import TimedRotatingFileHandler
 handler = TimedRotatingFileHandler(
     os.path.join(log_dir, "app.log"),
     when="midnight",
@@ -34,132 +141,42 @@ formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s: %(mess
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-# Ativa debug global (APScheduler, etc.)
 logging.basicConfig(level=logging.DEBUG)
-
-from flask import (
-    Flask, render_template, request, send_file, redirect, url_for,
-    flash, jsonify, abort, session
-)
-
-# ========================= IMPORTS DO SEU PROJETO =========================
-from modello import (
-    cerca_immagini,
-    encontrar_duplicatas,
-    extrai_features_imagem,
-    cerca_per_embedding
-)
-from indicizza import indicizza_immagini
-from progress import indicizzazione_progress, progress_lock
-
-# =============== IMPORT DO APSCHEDULER ===============
-from apscheduler.schedulers.background import BackgroundScheduler
-# ======================================================
-
-app = Flask(__name__)
-app.secret_key = 'chiave_segreta_per_flash_message'
 
 # ========================= ARQUIVOS E CONFIGS =========================
 file_indice_faiss = 'indice_faiss.index'
 file_percorsi = 'percorsi_immagini.pkl'
 embeddings_file = 'embeddings_immagini.npy'
 config_file = 'config.json'
-categorie_file = 'categorie.json'
+categorie_file = 'static/categorie.json'
 
 # ==================== VARIÁVEIS GLOBAIS ====================
 indicizzazione_thread = None
 indicizzazione_interrompida = threading.Event()
-
 directories_indicizzate = []
-# ==== VARIÁVEIS GLOBAIS DE PROGRESSO DO TREINO LORA ====
-lora_lock = threading.Lock()
-lora_progress = {
-    "running": False,
-    "percent": 0,
-    "log": [],
-    "completed": False
-}
-lora_thread = None
 
-try:
-    def carica_configurazione():
-        """
-        Carrega a lista de directories_indicizzate no formato:
-        [
-          {"path": "/caminho/absoluto", "nome": "ApelidoOpcional"},
-          ...
-        ]
-        Se o config estiver no formato antigo (lista de strings),
-        converte para lista de dicionários com nome="".
-        """
-        if not os.path.exists(config_file):
-            return []
-        with open(config_file, 'r') as f:
-            try:
-                config_data = json.load(f)
-            except json.JSONDecodeError:
-                return []
-        dirs = config_data.get('directories_indicizzate', [])
-        new_list = []
-        for d in dirs:
-            if isinstance(d, str):
-                # Formato antigo (apenas path)
-                new_list.append({"path": d, "nome": ""})
-            elif isinstance(d, dict):
-                path_ = d.get("path", "")
-                nome_ = d.get("nome", "")
-                new_list.append({"path": path_, "nome": nome_})
-        return new_list
+# Bloqueio e estrutura para progresso da indexação
+from progress import indicizzazione_progress, progress_lock
 
-    def salva_configurazione(directories_indicizzate_local):
-        """
-        Salva em config.json -> 'directories_indicizzate': lista de dict
-        (E mantém intacto qualquer outra chave do config.json, ex: generative_dirs)
-        """
-        if os.path.exists(config_file):
-            try:
-                with open(config_file, 'r') as f:
-                    config_completo = json.load(f)
-            except json.JSONDecodeError:
-                config_completo = {}
-        else:
-            config_completo = {}
-
-        config_completo['directories_indicizzate'] = directories_indicizzate_local
-
-        with open(config_file, 'w') as f:
-            json.dump(config_completo, f, ensure_ascii=False, indent=4)
-
-    directories_indicizzate = carica_configurazione()
-except Exception as e:
-    logger.error("[ERROR] Carregando configurações: %s", e)
-    directories_indicizzate = []
-
-
-# ========== NOVO: Carregar/Salvar info de diretórios para geração (generative_dirs) ==========
-def carica_configurazione_generativa():
-    """
-    Retorna algo como:
-    {
-      "path_dir1": true/false,
-      "path_dir2": true/false
-    }
-    indicando se cada diretório está habilitado para geração.
-    """
+# Lê do disco a lista de diretórios já configurada
+def carica_configurazione():
     if not os.path.exists(config_file):
-        return {}
-    try:
-        with open(config_file, 'r') as f:
+        return []
+    with open(config_file, 'r') as f:
+        try:
             config_data = json.load(f)
-            return config_data.get("generative_dirs", {})
-    except:
-        return {}
+        except json.JSONDecodeError:
+            return []
+    dirs = config_data.get('directories_indicizzate', [])
+    new_list = []
+    for d in dirs:
+        if isinstance(d, str):
+            new_list.append({"path": d, "nome": ""})
+        elif isinstance(d, dict):
+            new_list.append({"path": d.get("path",""), "nome": d.get("nome","")})
+    return new_list
 
-def salva_configurazione_generativa(generative_data):
-    """
-    Salva no config.json em 'generative_dirs'.
-    Mantém intacto o resto do config.
-    """
+def salva_configurazione(directories_indicizzate_local):
     if os.path.exists(config_file):
         try:
             with open(config_file, 'r') as f:
@@ -168,15 +185,43 @@ def salva_configurazione_generativa(generative_data):
             config_completo = {}
     else:
         config_completo = {}
+    config_completo['directories_indicizzate'] = directories_indicizzate_local
+    with open(config_file, 'w') as f:
+        json.dump(config_completo, f, ensure_ascii=False, indent=4)
 
+try:
+    directories_indicizzate = carica_configurazione()
+except Exception as e:
+    logger.error("[ERROR] Carregando configurações: %s", e)
+    directories_indicizzate = []
+
+# ========== Funções de config generativa (usadas por “geracao.py”, mas deixamos aqui) ==========
+
+def carica_configurazione_generativa():
+    if not os.path.exists(config_file):
+        return {}
+    try:
+        with open(config_file, 'r') as f:
+            config_data = json.load(f)
+        return config_data.get("generative_dirs", {})
+    except:
+        return {}
+
+def salva_configurazione_generativa(generative_data):
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r') as f:
+                config_completo = json.load(f)
+        except json.JSONDecodeError:
+            config_completo = {}
+    else:
+        config_completo = {}
     config_completo["generative_dirs"] = generative_data
     with open(config_file, 'w') as f:
         json.dump(config_completo, f, ensure_ascii=False, indent=4)
 
-
-# Funções para carregar e salvar usuários no mesmo config.json
+# ==================== Carregar e Salvar Usuários ====================
 def carica_utenti():
-    """Carrega a lista de usuários do config.json, retorna lista de dicionários."""
     if not os.path.exists(config_file):
         return []
     try:
@@ -187,7 +232,6 @@ def carica_utenti():
         return []
 
 def salva_utenti(users_list):
-    """Salva a lista de usuários em config.json (em 'users')."""
     if os.path.exists(config_file):
         try:
             with open(config_file, 'r') as f:
@@ -201,10 +245,6 @@ def salva_utenti(users_list):
         json.dump(config_completo, f, ensure_ascii=False, indent=4)
 
 def ensure_default_user():
-    """
-    Garante que o usuário 'chickellero' (senha 'chickellero') exista no config.json.
-    Nome: 'Marco'
-    """
     users = carica_utenti()
     found = False
     for u in users:
@@ -219,7 +259,6 @@ def ensure_default_user():
         })
         salva_utenti(users)
         logger.info("Usuário padrão 'chickellero' adicionado ao config.json.")
-
 
 # Carrega categorias
 try:
@@ -238,6 +277,7 @@ except Exception as e:
     logger.error("[ERROR] Carregando categorias: %s", e)
     categorie = {}
 
+# Progressos para duplicatas, reindex e etc.
 eliminazione_progress = {'percentuale': 0, 'log': [], 'completed': False}
 eliminazione_lock = threading.Lock()
 
@@ -254,6 +294,7 @@ encontrar_lock = threading.Lock()
 reindicizzazione_progress = {'percentuale': 0, 'log': [], 'completed': False}
 reindicizzazione_lock = threading.Lock()
 
+# P/ agendamento
 schedule_lock = threading.Lock()
 schedule_data = {"days": [], "hour": "00:00"}
 
@@ -293,43 +334,31 @@ def salva_pianificazione(new_schedule):
 
 carica_pianificazione()
 
-# ======================================================
-#   DECORATOR PARA EXIGIR LOGIN NAS ROTAS
-# ======================================================
+# ==================== Decorator login_required ====================
 from functools import wraps
-
 def login_required(f):
     @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
-            return redirect(url_for('index'))
-        return f(*args, **kwargs)
-    return decorated_function
+    def wrapper(*a, **k):
+        if not session.get("logged_in"):
+            return redirect(url_for("index"))
+        return f(*a, **k)
+    return wrapper
 
-# ======================================================
-#   ROTA PRINCIPAL (INDEX) COM POSSÍVEL LOGIN
-# ======================================================
+
+# ==================== ROTA PRINCIPAL (INDEX) ====================
 @app.route('/')
 def index():
-    """
-    Se usuário estiver logado, mostra o formulário de pesquisa de imagens.
-    Se não estiver logado, mostra o overlay de login.
-    """
     return render_template(
         'index.html',
         directories_indicizzate=directories_indicizzate,
         categorie=categorie
     )
 
-# ======================================================
-#   ROTA PARA PROCESSAR O LOGIN
-# ======================================================
+# ==================== LOGIN ====================
 @app.route('/fazer_login', methods=['POST'])
 def fazer_login():
     username = request.form.get('username')
     password = request.form.get('password')
-
-    # Carrega lista de usuários do config
     users = carica_utenti()
     for user in users:
         if user['username'] == username and user['password'] == password:
@@ -337,31 +366,25 @@ def fazer_login():
             session['username'] = username
             flash('Accesso effettuato con successo!', 'success')
             return redirect(url_for('index'))
-
     flash('Nome utente o password non validi!', 'error')
     return redirect(url_for('index'))
 
-# ======================================================
-#   ROTA PARA LOGOUT
-# ======================================================
 @app.route('/logout')
 def logout():
     session.clear()
     flash('Logout effettuato.', 'info')
     return redirect(url_for('index'))
+#  app.py  – logo depois das outras rotas -----------------------------
 
-# ======================================================
-#   PÁGINA DE ABOUT
-# ======================================================
+
+# ==================== PÁGINA DE ABOUT ====================
+
 @app.route('/about')
 @login_required
 def about():
     return render_template('about.html')
 
-# ======================================================
-#   PÁGINA DE CONFIGURAÇÕES (Impostazioni)
-#   (Agora sem a parte de "indicizzazione")
-# ======================================================
+# ==================== PÁGINA CONFIG (Impostazioni) ====================
 @app.route('/configurazioni')
 @login_required
 def configurazioni():
@@ -372,25 +395,19 @@ def configurazioni():
 def utilidades():
     return render_template('utilidades.html')
 
-# ======================================================
-#   NOVA PÁGINA DE INDICIZZAZIONE
-# ======================================================
+# ==================== NOVA PÁGINA DE INDICIZZAZIONE ====================
 @app.route('/indicizzazione')
 @login_required
 def indicizzazione():
-    """
-    Exibe a página que gerencia (a) adicionar diretórios,
-    (b) interromper indexação, (c) reindexar, (d) remover diretórios,
-    e mostra progresso. Também permite renomear diretórios.
-    """
     return render_template(
         'indicizzazione.html',
         directories_indicizzate=directories_indicizzate
     )
 
-# ======================================================
-#   ROTA PARA ADICIONAR NOVA DIRETORIA E INDICIZZAR
-# ======================================================
+# ==================== FUNÇÕES E ROTAS DE INDEXAÇÃO ====================
+from indicizza import indicizza_immagini
+from modello import cerca_immagini, encontrar_duplicatas, extrai_features_imagem, cerca_per_embedding
+
 @app.route('/indicizza', methods=['POST'])
 @login_required
 def indicizza():
@@ -407,21 +424,16 @@ def indicizza():
         flash('Errore: La directory fornita non è valida.', 'error config')
         return redirect(url_for('indicizzazione'))
 
-    # Verifica se já existe
     for d in directories_indicizzate:
         if d['path'] == directory_input:
             flash('La directory è già stata indicizzata.', 'info config')
             return redirect(url_for('indicizzazione'))
 
-    # Verifica se outra indexação está em curso
     if indicizzazione_thread and indicizzazione_thread.is_alive():
         flash('Indicizzazione già in corso.', 'error config')
         return redirect(url_for('indicizzazione'))
 
-    # Seta evento para false (não interrompida)
     indicizzazione_interrompida.clear()
-
-    # Adiciona no array e salva config
     directories_indicizzate.append({"path": directory_input, "nome": nome_input})
     salva_configurazione(directories_indicizzate)
 
@@ -431,14 +443,8 @@ def indicizza():
 
     def run_indicizzazione():
         try:
-            logger.debug("Iniciando indicizza_immagini nas pastas: %s", directories_indicizzate)
-            # Monta lista de paths (strings) a partir do array
             lista_paths = [d["path"] for d in directories_indicizzate]
-
-            indicizza_immagini(lista_paths,
-                               file_indice_faiss,
-                               file_percorsi,
-                               indicizzazione_interrompida)
+            indicizza_immagini(lista_paths, file_indice_faiss, file_percorsi, indicizzazione_interrompida)
             with progress_lock:
                 if indicizzazione_interrompida.is_set():
                     indicizzazione_progress['log'].append("Indicizzazione interrotta dall'utente.")
@@ -456,9 +462,6 @@ def indicizza():
     flash(f'Indicizzazione avviata per "{directory_input}".', 'success config')
     return redirect(url_for('indicizzazione'))
 
-# ======================================================
-#   ROTA PARA INTERROMPER INDEXAÇÃO
-# ======================================================
 @app.route('/interrompi_indicizzazione', methods=['POST'])
 @login_required
 def interrompi_indicizzazione_route():
@@ -467,9 +470,6 @@ def interrompi_indicizzazione_route():
     flash('Indicizzazione interrotta.', 'info config')
     return redirect(url_for('indicizzazione'))
 
-# ======================================================
-#   ROTA PARA CONSULTAR STATUS DA INDEXAÇÃO (JSON)
-# ======================================================
 @app.route('/stato_indicizzazione')
 @login_required
 def stato_indicizzazione():
@@ -477,22 +477,16 @@ def stato_indicizzazione():
         progress_data = indicizzazione_progress.copy()
     return jsonify(progress_data)
 
-# ======================================================
-#   ROTA PARA REINDICIZZA TUDO
-# ======================================================
 @app.route('/reindicizza_tutto', methods=['POST'])
 @login_required
 def reindicizza_tutto():
     global indicizzazione_thread
     global directories_indicizzate, indicizzazione_interrompida
 
-    logger.debug("reindicizza_tutto chamado.")
-    # Interrompe a indexação se estiver rodando
     indicizzazione_interrompida.set()
     if indicizzazione_thread and indicizzazione_thread.is_alive():
         indicizzazione_thread.join()
 
-    # Remove os arquivos de índice
     if os.path.exists('embeddings_immagini.npy'):
         os.remove('embeddings_immagini.npy')
     if os.path.exists('indice_faiss.index'):
@@ -507,17 +501,9 @@ def reindicizza_tutto():
     indicizzazione_interrompida.clear()
 
     def run_indicizzazione_completa():
-        from indicizza import indicizza_immagini
         try:
-            logger.debug("Iniciando reindicizzazione TUDO para dirs: %s", directories_indicizzate)
             lista_paths = [d["path"] for d in directories_indicizzate]
-
-            indicizza_immagini(
-                lista_paths,
-                "indice_faiss.index",
-                "percorsi_immagini.pkl",
-                interrompi_evento=indicizzazione_interrompida
-            )
+            indicizza_immagini(lista_paths, file_indice_faiss, file_percorsi, indicizzazione_interrompida)
             with progress_lock:
                 if indicizzazione_interrompida.is_set():
                     indicizzazione_progress['log'].append("Reindicizzazione interrotta dall'utente.")
@@ -535,9 +521,6 @@ def reindicizza_tutto():
     flash("Reindicizzazione completa avviata.", "success config")
     return redirect(url_for('indicizzazione'))
 
-# ======================================================
-#   ROTA PARA ATUALIZAR O NOME (apelido) DE UMA DIRECTORY
-# ======================================================
 @app.route('/aggiorna_nome_directory', methods=['POST'])
 @login_required
 def aggiorna_nome_directory():
@@ -557,9 +540,6 @@ def aggiorna_nome_directory():
         flash('Directory non trovata.', 'error config')
     return redirect(url_for('indicizzazione'))
 
-# ======================================================
-#   ROTA PARA REMOVER UMA DIRECTORY
-# ======================================================
 @app.route('/rimuovi_directory', methods=['POST'])
 @login_required
 def rimuovi_directory():
@@ -580,158 +560,380 @@ def rimuovi_directory():
         flash('La directory non è presente nella lista.', 'error config')
     return redirect(url_for('indicizzazione'))
 
-# ======================================================
-#   PESQUISA DE IMAGENS (por texto OU upload)
-# ======================================================
-@app.route('/ricerca', methods=['POST'])
+# Chamado após remover directories, para “reindex incremental”
+def reindicizza_dopo_rimozione():
+    def run_reindicizzazione():
+        with reindicizzazione_lock:
+            reindicizzazione_progress['percentuale'] = 0
+            reindicizzazione_progress['log'] = []
+            reindicizzazione_progress['completed'] = False
+            reindicizzazione_progress['log'].append("Inizio della reindicizzazione...")
+
+        try:
+            if os.path.exists('embeddings_immagini.npy') and os.path.exists(file_percorsi):
+                with open('embeddings_immagini.npy', 'rb') as f:
+                    embeddings = np.load(f)
+                with open(file_percorsi, 'rb') as f:
+                    percorsi_immagini = pickle.load(f)
+
+                nuovi_percorsi = []
+                nuovi_embeddings = []
+                total_images = len(percorsi_immagini)
+                lista_paths = [d["path"] for d in directories_indicizzate]
+
+                for idx, percorso in enumerate(percorsi_immagini):
+                    if os.path.exists(percorso) and any(percorso.startswith(dir_) for dir_ in lista_paths):
+                        nuovi_percorsi.append(percorso)
+                        nuovi_embeddings.append(embeddings[idx])
+                    with reindicizzazione_lock:
+                        percentuale = int((idx / total_images) * 100)
+                        reindicizzazione_progress['percentuale'] = percentuale
+                        if idx % 10 == 0 or idx == total_images - 1:
+                            reindicizzazione_progress['log'].append(
+                                f"Processate {idx + 1} di {total_images} immagini."
+                            )
+                if nuovi_embeddings:
+                    embedding_array = np.vstack(nuovi_embeddings).astype('float32')
+                    faiss.normalize_L2(embedding_array)
+
+                    with open('embeddings_immagini.npy', 'wb') as f:
+                        np.save(f, embedding_array)
+
+                    dimensione = embedding_array.shape[1]
+                    indice_faiss_ = faiss.IndexFlatIP(dimensione)
+                    indice_faiss_.add(embedding_array)
+                    faiss.write_index(indice_faiss_, file_indice_faiss)
+
+                    with open(file_percorsi, 'wb') as f:
+                        pickle.dump(nuovi_percorsi, f)
+
+                    with reindicizzazione_lock:
+                        reindicizzazione_progress['percentuale'] = 100
+                        reindicizzazione_progress['completed'] = True
+                        reindicizzazione_progress['log'].append("Reindicizzazione completata con successo.")
+                else:
+                    if os.path.exists('embeddings_immagini.npy'):
+                        os.remove('embeddings_immagini.npy')
+                    if os.path.exists('indice_faiss.index'):
+                        os.remove('indice_faiss.index')
+                    if os.path.exists('percorsi_immagini.pkl'):
+                        os.remove('percorsi_immagini.pkl')
+                    with reindicizzazione_lock:
+                        reindicizzazione_progress['percentuale'] = 100
+                        reindicizzazione_progress['completed'] = True
+                        reindicizzazione_progress['log'].append("Nessuna immagine da indicizzare. Dati rimossi.")
+            else:
+                with reindicizzazione_lock:
+                    reindicizzazione_progress['completed'] = True
+                    reindicizzazione_progress['log'].append("Nessun indice da aggiornare.")
+        except Exception as e:
+            with reindicizzazione_lock:
+                reindicizzazione_progress['log'].append(f"Errore durante la reindicizzazione: {e}")
+                reindicizzazione_progress['completed'] = True
+
+    reindicizzazione_thread = threading.Thread(target=run_reindicizzazione)
+    reindicizzazione_thread.start()
+
+
+@app.route('/stato_reindicizzazione_page')
+@login_required
+def stato_reindicizzazione_page():
+    return render_template('stato_reindicizzazione.html')
+
+@app.route('/stato_reindicizzazione')
+@login_required
+def stato_reindicizzazione():
+    with reindicizzazione_lock:
+        progress_data = reindicizzazione_progress.copy()
+    return jsonify(progress_data)
+
+# ==================== ROTA DE PESQUISA (texto ou imagem) ====================
+@app.route("/ricerca", methods=["POST"])
 @login_required
 def ricerca():
-    global directories_indicizzate, categorie
-    image_file = request.files.get('image_file')
+    dirs_sel = request.form.getlist("directories_selezionate") or [
+        d["path"] if isinstance(d, dict) else d for d in directories_indicizzate
+    ]
 
-    if image_file and image_file.filename != '':
-        # BUSCA POR IMAGEM
-        directories_selezionate = request.form.getlist('directories_selezionate')
-        if not directories_selezionate:
-            # Se o usuário não marcou nada, usar todas
-            directories_selezionate = [d["path"] for d in directories_indicizzate]
-
-        import time
-        timestamp = int(time.time())
-        temp_filename = f"temp_upload_{timestamp}.jpg"
-        temp_filepath = os.path.join("/tmp", temp_filename)
-        image_file.save(temp_filepath)
-
+    # --------------------------------------------------- pesquisa por imagem
+    image_file = request.files.get("image_file")
+    if image_file and image_file.filename:
+        import tempfile, os
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+        image_file.save(tmp.name)
         try:
-            embedding_img = extrai_features_imagem(temp_filepath)
-            risultati, total_resultados = cerca_per_embedding(
-                embedding_img,
-                file_indice_faiss,
-                file_percorsi,
-                directories_selezionate=directories_selezionate,
-                offset=0,
-                limit=100
+            emb = extrai_features_imagem(tmp.name)
+            risultati, totali = cerca_per_embedding(
+                emb, file_indice_faiss, file_percorsi,
+                directories_selezionate=dirs_sel,
+                offset=0, limit=100
             )
-            if os.path.exists(temp_filepath):
-                os.remove(temp_filepath)
+        finally:
+            tmp.close(); os.remove(tmp.name)
 
-            if total_resultados == 0:
-                flash("Nessuna immagine simile trovata.", 'info index')
-                return redirect(url_for('index'))
+        if not totali:
+            flash("Nessuna immagine simile trovata.", "info index")
+            return redirect(url_for("index"))
 
-            return render_template('risultati.html',
-                                   immagini=risultati,
-                                   total_resultados=total_resultados,
-                                   per_page=100)
-        except Exception as e:
-            flash(f"Errore durante la ricerca per immagine: {e}", 'error index')
-            logger.error("Errore durante la ricerca per immagine: %s", e)
-            return redirect(url_for('index'))
+        # salva stats “popularità”
+        stats = Counter(_load_stats())
+        for r in risultati:
+            stats[r["percorso"]] += 1
+        _save_stats(stats)
 
-    else:
-        # BUSCA POR TEXTO
-        testo_ricerca = request.form.get('input_testo', '')
-        categoria = request.form.get('categoria', '')
-        directories_selezionate = request.form.getlist('directories_selezionate')
-        tags_selezionate = request.form.get('tags_selezionate', '')
-        tags_list = tags_selezionate.split(',') if tags_selezionate else []
+        session.update({
+            "termo_busca": "", "categoria": "",
+            "tags_selezionate": "", "directories_selezionate": dirs_sel,
+            FILTERS_KEY: {}
+        })
+        return render_template("risultati.html",
+                               immagini=risultati,
+                               total_resultados=totali,
+                               per_page=100,
+                               categorie=categorie,
+                               directories_indicizzate=directories_indicizzate)
 
-        if not directories_indicizzate:
-            flash('Errore: Devi indicizzare prima le immagini.', 'error index')
-            return redirect(url_for('index'))
+    # --------------------------------------------------- pesquisa por texto
+    termo      = request.form.get("input_testo", "").strip()
+    categoria  = request.form.get("categoria", "").strip()
+    tags_raw   = request.form.get("tags_selezionate", "")
+    tags_list  = [t for t in tags_raw.split(",") if t]
 
-        if not directories_selezionate:
-            flash('Errore: Seleziona almeno una directory per la ricerca.', 'error index')
-            return redirect(url_for('index'))
+    descrizione = " ".join([termo] + tags_list)
+    immagini, totali = cerca_immagini(
+        descrizione             = descrizione,
+        categoria               = categoria,
+        file_indice_faiss       = file_indice_faiss,
+        file_percorsi           = file_percorsi,
+        directories_selezionate = dirs_sel,
+        offset=0, limit=100
+    )
 
-        testo_completo = testo_ricerca
-        if tags_list:
-            testo_completo += ' ' + ' '.join(tags_list)
+    session.update({
+        "termo_busca": termo,
+        "categoria": categoria,
+        "tags_selezionate": tags_raw,
+        "directories_selezionate": dirs_sel,
+        FILTERS_KEY: {}
+    })
 
-        per_page = 100
-        session['termo_busca'] = testo_completo
-        session['categoria'] = categoria
-        session['per_page'] = per_page
-        session['directories_selezionate'] = directories_selezionate
+    return render_template("risultati.html",
+                           immagini=immagini,
+                           total_resultados=totali,
+                           per_page=100,
+                           categorie=categorie,
+                           directories_indicizzate=directories_indicizzate)
 
-        try:
-            logger.debug("Iniciando busca (TEXTO): '%s', categoria='%s'", testo_completo, categoria)
-            immagini, total_resultados = cerca_immagini(
-                descrizione=testo_completo,
-                categoria=categoria,
-                file_indice_faiss=file_indice_faiss,
-                file_percorsi=file_percorsi,
-                directories_selezionate=directories_selezionate,
-                offset=0,
-                limit=per_page
-            )
-            session['total_resultados'] = total_resultados
-            logger.debug("Busca retornou %d imagens, total: %d", len(immagini), total_resultados)
 
-            return render_template('risultati.html',
-                                   immagini=immagini,
-                                   total_resultados=total_resultados,
-                                   per_page=per_page)
-        except Exception as e:
-            flash(f"Errore durante la ricerca: {e}", 'error index')
-            logger.error("Errore durante a pesquisa: %s", e)
-            return redirect(url_for('index'))
-
-@app.route('/carregar_mais_imagens', methods=['POST'])
+# -----------------------------------------------------------------
+@app.route("/carregar_mais_imagens", methods=["POST"])
 @login_required
 def carregar_mais_imagens():
-    data = request.get_json()
-    current_index = data.get('current_index', 0)
-    per_page = data.get('per_page', 100)
-    termo_busca = session.get('termo_busca', '')
-    categoria = session.get('categoria', '')
-    directories_selezionate = session.get('directories_selezionate', [])
-    tags_selezionate = session.get('tags_selezionate', '')
-    tags_list = tags_selezionate.split(',') if tags_selezionate else []
-    testo_completo = termo_busca
-    if tags_list:
-        testo_completo += ' ' + ' '.join(tags_list)
+    data = request.get_json() or {}
+    cur  = int(data.get("current_index", 0))
+    step = int(data.get("per_page", 100))
 
-    if not testo_completo and not categoria:
-        return jsonify({'imagens': [], 'end': True})
+    extra = session.get(FILTERS_KEY, {})
+    termo = " ".join(filter(None, [session.get("termo_busca",""), extra.get("text","")]))
+    categoria = extra.get("categoria") or session.get("categoria", "")
+    tags   = [t for t in session.get("tags_selezionate","").split(",") if t] + extra.get("tags", [])
+    colori = extra.get("color", [])
+    dirs_sel = session.get("directories_selezionate") or [
+        d["path"] if isinstance(d, dict) else d for d in directories_indicizzate
+    ]
 
-    immagini, total_resultados = cerca_immagini(
-        descrizione=testo_completo,
-        categoria=categoria,
-        file_indice_faiss=file_indice_faiss,
-        file_percorsi=file_percorsi,
-        directories_selezionate=directories_selezionate,
-        offset=current_index,
-        limit=per_page
+    if not any([termo, categoria, tags, colori]):
+        # feed “populari / random”
+        if not os.path.isfile(file_percorsi):
+            return jsonify({"imagens": [], "end": True})
+        percorsi = pickle.load(open(file_percorsi,"rb"))
+        stats    = _load_stats()
+        percorsi.sort(key=lambda p: (-stats.get(p,0), p))
+        slice_   = percorsi[cur:cur+step]
+        end_flag = (cur+len(slice_)) >= len(percorsi)
+        imgs = [{"percorso": p, "percorso_url": p} for p in slice_]
+        return jsonify({"imagens": imgs, "end": end_flag})
+
+    descr_full = " ".join([termo]+tags+colori)
+    imgs, tot = cerca_immagini(
+        descrizione = descr_full, categoria = categoria,
+        file_indice_faiss = file_indice_faiss,
+        file_percorsi = file_percorsi,
+        directories_selezionate = dirs_sel,
+        offset = cur, limit = step
     )
-    end_of_results = (current_index + len(immagini)) >= total_resultados
-    return jsonify({'imagens': immagini, 'end': end_of_results})
+    return jsonify({"imagens": imgs, "end": (cur+len(imgs))>=tot})
+
+
+# -----------------------  /galleria  ------------------------------------
+# -----------------------  /galleria  ------------------------------------
+@app.route("/galleria")
+@login_required
+def galleria():
+    PER_PAGE = 100
+
+    # ───────────────────────── contexto salvo na sessão ─────────────────
+    dirs_sel = session.get("directories_selezionate") or [
+        d["path"] if isinstance(d, dict) else d
+        for d in directories_indicizzate
+    ]
+    extra     = session.get(FILTERS_KEY, {})          # {text,categoria,tags,color}
+    termo_base = session.get("termo_busca", "")
+    cat_base   = session.get("categoria", "")
+    tags_base  = [t for t in session.get("tags_selezionate", "").split(",") if t]
+
+    # filtros aplicados na barra da galeria
+    termo_f   = extra.get("text", "")
+    cat_f     = extra.get("categoria", "")
+    tags_f    = extra.get("tags", [])
+    colori_f  = extra.get("color", [])
+
+    # flags: há ou não algum filtro?
+    ha_filtro = any([termo_base, termo_f, cat_base or cat_f,
+                     tags_base, tags_f, colori_f])
+
+    # ───────────────────────── 1) feed “populari / random” ──────────────
+    if not ha_filtro:
+        percorsi = (
+            pickle.load(open(file_percorsi, "rb"))
+            if os.path.isfile(file_percorsi) else []
+        )
+        stats = _load_stats()
+        percorsi.sort(key=lambda p: (-stats.get(p, 0), p))
+
+        top = percorsi[:PER_PAGE] or random.sample(
+            percorsi, min(PER_PAGE, len(percorsi))
+        )
+        immagini = [
+            {"percorso": p, "percorso_url": p, "extra_ocr_match": False}
+            for p in top
+        ]
+        tot = len(percorsi)
+
+    # ───────────────────────── 2) filtros → busca CLIP - OCR ────────────
+    else:
+        # descrição completa para o modelo CLIP
+        descr = " ".join(filter(
+            None, [termo_base, termo_f] + tags_base + tags_f + colori_f
+        ))
+        categoria = cat_f or cat_base
+
+        immagini, tot = cerca_immagini(
+            descrizione             = descr,
+            categoria               = categoria,
+            file_indice_faiss       = file_indice_faiss,
+            file_percorsi           = file_percorsi,
+            directories_selezionate = dirs_sel,
+            offset=0, limit=PER_PAGE
+        )
+        # marca todos como “não veio de OCR” (se quiser OCR, adapte aqui)
+        for img in immagini:
+            img["extra_ocr_match"] = False
+
+    # ───────────────────────── render 1ª página ─────────────────────────
+    return render_template(
+        "risultati.html",
+        immagini               = immagini,
+        total_resultados       = tot,
+        per_page               = PER_PAGE,
+        categorie              = categorie,
+        directories_indicizzate= directories_indicizzate
+    )
+
+
+@app.route("/set_filtros_galeria", methods=["POST"])
+@login_required
+def set_filtros_galeria():
+    """
+    Recebe JSON, grava no cookie de sessão e — se presente — atualiza
+    também a lista de diretórios activos para as próximas chamadas.
+      payload = {
+          text: "...", categoria:"...", tags:[...], color:[...], dirs:[...]
+      }
+    """
+    payload = request.get_json(force=True) or {}
+
+    # guarda tudo em FILTERS_KEY  (text, categoria, tags, color, dirs)
+    session[FILTERS_KEY] = payload
+
+    # se o usuário escolheu diretórios, actualizamos o contexto
+    if payload.get("dirs"):                   # lista de paths
+        session["directories_selezionate"] = payload["dirs"]
+
+    return ("", 204)   # resposta vazia / sucesso
+
+
+
+# --- logo depois da rota /set_filtros_galeria ----------------------------
+@app.route("/ricerca_simili", methods=["POST"])
+@login_required
+def ricerca_simili():
+    data     = request.get_json(force=True)
+    img_path = data.get("path")
+    dirs_sel = data.get("dirs") or [
+        d["path"] if isinstance(d, dict) else d for d in directories_indicizzate
+    ]
+
+    if not (img_path and os.path.exists(img_path)):
+        flash("Immagine non trovata.", "error")
+        return redirect(url_for("index"))
+
+    # extrai embedding da própria imagem
+    try:
+        emb = extrai_features_imagem(img_path)
+    except Exception as e:
+        flash(f"Errore nell'elaborazione dell'immagine: {e}", "error")
+        return redirect(url_for("index"))
+
+    risultati, tot = cerca_per_embedding(
+        emb, file_indice_faiss, file_percorsi,
+        directories_selezionate=dirs_sel, offset=0, limit=100
+    )
+
+    # estatísticas “popularità”
+    stats = Counter(_load_stats())
+    for r in risultati:
+        stats[r["percorso"]] += 1
+    _save_stats(stats)
+
+    # mantém contexto na sessão
+    session.update({
+        "termo_busca": "", "categoria": "",
+        "tags_selezionate": "", "directories_selezionate": dirs_sel,
+        FILTERS_KEY: {}
+    })
+
+    return render_template("risultati.html",
+                           immagini=risultati,
+                           total_resultados=tot,
+                           per_page=100,
+                           categorie=categorie,
+                           directories_indicizzate=directories_indicizzate)
 
 @app.route('/immagini/<path:percorso>')
 @login_required
 def immagini(percorso):
-    percorso = '/' + percorso
-    if not percorso:
-        return "Immagine non trovata", 404
-    if os.path.exists(percorso):
-        return send_file(percorso)
-    else:
-        return "Immagine non trovata", 404
+    """Serve o arquivo original exatamente onde está no disco."""
+    safe_path = os.path.normpath(unquote(percorso))   # decodifica e normaliza
+    if os.path.exists(safe_path):
+        return send_file(safe_path)
+    return "Immagine non trovata", 404
+
 
 @app.route('/miniatura/<path:percorso>')
 @login_required
 def miniatura(percorso):
-    percorso = '/' + percorso
-    tamanho = (200, 200)
-    if os.path.exists(percorso):
-        with Image.open(percorso) as img:
-            img.thumbnail(tamanho)
-            img_io = BytesIO()
-            img.save(img_io, 'JPEG')
-            img_io.seek(0)
-            return send_file(img_io, mimetype='image/jpeg')
-    else:
+    """Gera e devolve miniatura 200×200 em JPEG."""
+    safe_path = os.path.normpath(unquote(percorso))
+    if not os.path.exists(safe_path):
         return "Immagine non trovata", 404
+
+    with Image.open(safe_path) as img:
+        img.thumbnail((200, 200))
+        buf = BytesIO()
+        img.save(buf, 'JPEG')
+        buf.seek(0)
+        return send_file(buf, mimetype='image/jpeg')
 
 @app.route('/get_metadata', methods=['POST'])
 @login_required
@@ -768,9 +970,7 @@ def get_metadata():
         logger.error("get_metadata erro: %s", e)
     return jsonify({'metadati': metadati})
 
-# ======================================================
-#   DUPLICATAS (encontrar_duplicatas, eliminar_duplicatas)
-# ======================================================
+# ==================== DUPLICATAS ====================
 @app.route('/encontrar_duplicatas', methods=['GET', 'POST'])
 @login_required
 def encontrar_duplicatas_route():
@@ -919,7 +1119,6 @@ def eliminar_duplicatas_route():
                 for img in images_to_delete:
                     image_path = img['percorso']
                     if os.path.exists(image_path):
-                        # Só deleta se pertence a alguma directory indicizzata
                         if any(image_path.startswith(p) for p in lista_paths):
                             os.remove(image_path)
                             with eliminazione_lock:
@@ -961,340 +1160,84 @@ def stato_eliminazione():
         progress_data = eliminazione_progress.copy()
     return jsonify(progress_data)
 
-@app.route('/stato_reindicizzazione_page')
-@login_required
-def stato_reindicizzazione_page():
-    return render_template('stato_reindicizzazione.html')
+# ==================== CONVERSOR ====================
 
-@app.route('/stato_reindicizzazione')
-@login_required
-def stato_reindicizzazione():
-    with reindicizzazione_lock:
-        progress_data = reindicizzazione_progress.copy()
-    return jsonify(progress_data)
+# =================================================================
+#  app.py  – SEZIONE /conversor  (sostituisci l'intera vecchia view)
+# =================================================================
 
-def reindicizza_dopo_rimozione():
-    def run_reindicizzazione():
-        with reindicizzazione_lock:
-            reindicizzazione_progress['percentuale'] = 0
-            reindicizzazione_progress['log'] = []
-            reindicizzazione_progress['completed'] = False
-            reindicizzazione_progress['log'].append("Inizio della reindicizzazione...")
+import os, tempfile
+from werkzeug.utils import secure_filename
 
-        try:
-            if os.path.exists('embeddings_immagini.npy') and os.path.exists(file_percorsi):
-                with open('embeddings_immagini.npy', 'rb') as f:
-                    embeddings = np.load(f)
-                with open(file_percorsi, 'rb') as f:
-                    percorsi_immagini = pickle.load(f)
+from conversor import ConversionOptions, bulk_convert
 
-                nuovi_percorsi = []
-                nuovi_embeddings = []
-                total_images = len(percorsi_immagini)
-                lista_paths = [d["path"] for d in directories_indicizzate]
-
-                for idx, percorso in enumerate(percorsi_immagini):
-                    if os.path.exists(percorso) and any(percorso.startswith(dir_) for dir_ in lista_paths):
-                        nuovi_percorsi.append(percorso)
-                        nuovi_embeddings.append(embeddings[idx])
-                    with reindicizzazione_lock:
-                        percentuale = int((idx / total_images) * 100)
-                        reindicizzazione_progress['percentuale'] = percentuale
-                        if idx % 10 == 0 or idx == total_images - 1:
-                            reindicizzazione_progress['log'].append(
-                                f"Processate {idx + 1} di {total_images} immagini."
-                            )
-                if nuovi_embeddings:
-                    embedding_array = np.vstack(nuovi_embeddings).astype('float32')
-                    faiss.normalize_L2(embedding_array)
-
-                    with open('embeddings_immagini.npy', 'wb') as f:
-                        np.save(f, embedding_array)
-
-                    dimensione = embedding_array.shape[1]
-                    indice_faiss_ = faiss.IndexFlatIP(dimensione)
-                    indice_faiss_.add(embedding_array)
-                    faiss.write_index(indice_faiss_, file_indice_faiss)
-
-                    with open(file_percorsi, 'wb') as f:
-                        pickle.dump(nuovi_percorsi, f)
-
-                    with reindicizzazione_lock:
-                        reindicizzazione_progress['percentuale'] = 100
-                        reindicizzazione_progress['completed'] = True
-                        reindicizzazione_progress['log'].append("Reindicizzazione completata con successo.")
-                else:
-                    # Nenhuma imagem sobrou => Remove todos os arquivos
-                    if os.path.exists('embeddings_immagini.npy'):
-                        os.remove('embeddings_immagini.npy')
-                    if os.path.exists('indice_faiss.index'):
-                        os.remove('indice_faiss.index')
-                    if os.path.exists('percorsi_immagini.pkl'):
-                        os.remove('percorsi_immagini.pkl')
-                    with reindicizzazione_lock:
-                        reindicizzazione_progress['percentuale'] = 100
-                        reindicizzazione_progress['completed'] = True
-                        reindicizzazione_progress['log'].append("Nessuna immagine da indicizzare. Dati rimossi.")
-            else:
-                with reindicizzazione_lock:
-                    reindicizzazione_progress['completed'] = True
-                    reindicizzazione_progress['log'].append("Nessun indice da aggiornare.")
-        except Exception as e:
-            with reindicizzazione_lock:
-                reindicizzazione_progress['log'].append(f"Errore durante la reindicizzazione: {e}")
-                reindicizzazione_progress['completed'] = True
-
-    reindicizzazione_thread = threading.Thread(target=run_reindicizzazione)
-    reindicizzazione_thread.start()
-
-# ======================================================
-#   PÁGINA DE CATEGORIE E TAG
-# ======================================================
-@app.route('/configura_categorie', methods=['GET', 'POST'])
-@login_required
-def configura_categorie():
-    global categorie
-    if request.method == 'POST':
-        data = request.form.get('categorie_data')
-        try:
-            nuove_categorie = json.loads(data)
-            with open(categorie_file, 'w') as f:
-                json.dump(nuove_categorie, f, ensure_ascii=False, indent=4)
-            categorie = carica_categorie()
-            flash('Categorie e tag aggiornate con successo.', 'success')
-            return redirect(url_for('configura_categorie'))
-        except json.JSONDecodeError:
-            flash('Errore: Il formato JSON non è valido.', 'error')
-            return redirect(url_for('configura_categorie'))
-        except Exception as ex:
-            flash(f'Errore durante l\'aggiornamento: {ex}', 'error')
-            return redirect(url_for('configura_categorie'))
-    else:
-        if not os.path.exists(categorie_file):
-            with open(categorie_file, 'w') as f:
-                json.dump({}, f, ensure_ascii=False, indent=4)
-        with open(categorie_file, 'r') as f:
-            try:
-                categorie_data = json.dumps(categorie, ensure_ascii=False, indent=4)
-            except:
-                categorie_data = '{}'
-        return render_template('configura_categorie.html', categorie_data=categorie_data)
-
-# ======================================================
-#   PROGRAMMAZIONE INDICIZZAZIONE (APSCHEDULER)
-# ======================================================
-day_map_ita = {
-    "Lunedì": "mon",
-    "Martedì": "tue",
-    "Mercoledì": "wed",
-    "Giovedì": "thu",
-    "Venerdì": "fri",
-    "Sabato": "sat",
-    "Domenica": "sun"
-}
-
-reindicizzazione_programmata_progress = {
-    'percentuale': 0,
-    'log': [],
-    'completed': False
-}
-reindicizzazione_programmata_lock = threading.Lock()
-
-@app.route('/stato_reindicizzazione_programmata')
-@login_required
-def stato_reindicizzazione_programmata():
-    with reindicizzazione_programmata_lock:
-        return jsonify(reindicizzazione_programmata_progress.copy())
-
-def job_reindicizza_programmata():
-    logger.debug("job_reindicizza_programmata() disparado pelo APScheduler!")
-    with reindicizzazione_programmata_lock:
-        reindicizzazione_programmata_progress['percentuale'] = 0
-        reindicizzazione_programmata_progress['log'] = ["Reindicizzazione programmata avviata..."]
-        reindicizzazione_programmata_progress['completed'] = False
-
-    def run_scheduled():
-        try:
-            logger.debug("Iniciando indicizza_immagini (reindex programada), dirs= %s", directories_indicizzate)
-            lista_paths = [d["path"] for d in directories_indicizzate]
-            indicizza_immagini(lista_paths, file_indice_faiss, file_percorsi, indicizzazione_interrompida)
-            with reindicizzazione_programmata_lock:
-                reindicizzazione_programmata_progress['percentuale'] = 100
-                reindicizzazione_programmata_progress['log'].append("Reindicizzazione programmata completata con successo.")
-                reindicizzazione_programmata_progress['completed'] = True
-        except Exception as e:
-            with reindicizzazione_programmata_lock:
-                reindicizzazione_programmata_progress['log'].append(f"Errore: {e}")
-                reindicizzazione_programmata_progress['percentuale'] = 100
-                reindicizzazione_programmata_progress['completed'] = True
-            logger.error("Errore reindicizza programmada: %s", e)
-
-    t = threading.Thread(target=run_scheduled)
-    t.start()
-
-def start_scheduler():
-    logger.debug("start_scheduler() chamado. Carregando pianificazione...")
-    carica_pianificazione()
-    days = schedule_data.get("days", [])
-    hour_str = schedule_data.get("hour", "00:00")
-
-    if not days or not hour_str:
-        logger.debug("Nenhum dia/hora programado => Scheduler não criou job")
-        return
-
-    days_en = []
-    for d in days:
-        if d in day_map_ita:
-            days_en.append(day_map_ita[d])
-    day_of_week = ",".join(days_en)
-
-    h, m = 0, 0
-    try:
-        part = hour_str.split(":")
-        h = int(part[0])
-        m = int(part[1]) if len(part) > 1 else 0
-    except:
-        pass
-
-    logger.debug("Programando reindex com day_of_week=%s, hour=%d, minute=%d", day_of_week, h, m)
-
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        func=job_reindicizza_programmata,
-        trigger='cron',
-        day_of_week=day_of_week,
-        hour=h,
-        minute=m,
-        id='reindex_agendado',
-        replace_existing=True
-    )
-    scheduler.start()
-    logger.debug("APScheduler iniciado. Jobs atuais: %s", scheduler.get_jobs())
-
-@app.route('/programmazione_indicizzazione')
-@login_required
-def programmazione_indicizzazione():
-    carica_pianificazione()
-    return render_template('programmazione_indicizzazione.html', schedule=schedule_data)
-
-@app.route('/salva_programmazione_indicizzazione', methods=['POST'])
-@login_required
-def salva_programmazione_indicizzazione():
-    global schedule_data
-    days_selected = request.form.getlist('days')
-    hour_selected = request.form.get('ora_programmata', '00:00')
-    new_schedule = {"days": days_selected, "hour": hour_selected}
-    with schedule_lock:
-        schedule_data = new_schedule
-        salva_pianificazione(schedule_data)
-    logger.debug("Programma salvata => Chamando start_scheduler() novamente para recriar job do APScheduler")
-    start_scheduler()
-    flash('Programmazione salvata con successo.', 'success')
-    return redirect(url_for('programmazione_indicizzazione'))
-
-# ==================== ROTTE PER IL CONVERSOR ==========================
-def run_conversion(input_dir, output_dir):
-    with conversion_lock:
-        conversion_status['percentuale'] = 0
-        conversion_status['log'] = []
-        conversion_status['completed'] = False
-        conversion_status['total_files'] = 0
-        conversion_status['processed_files'] = 0
-
-    cmd_find = [
-        "find", input_dir,
-        "-type", "d", "-name", ".*", "-prune", "-o",
-        "-type", "f",
-        "(",
-            "-iname", "*.psd", "-o",
-            "-iname", "*.psb", "-o",
-            "-iname", "*.ifd", "-o",
-            "-iname", "*.tif", "-o",
-            "-iname", "*.tiff",
-        ")",
-        "-print"
-    ]
-    result = subprocess.run(cmd_find, capture_output=True, text=True)
-    files_list = result.stdout.strip().split('\n')
-    total_files = len([f for f in files_list if f.strip() != ''])
-    with conversion_lock:
-        conversion_status['total_files'] = total_files
-        conversion_status['log'].append(f"Trovati {total_files} file da convertire.")
-
-    script_path = os.path.join(os.path.dirname(__file__), "app", "convert.sh")
-    env_vars = os.environ.copy()
-    env_vars["INPUT_DIR"] = input_dir
-    env_vars["OUTPUT_DIR"] = output_dir
-
-    process = subprocess.Popen(
-        ["bash", script_path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        env=env_vars
-    )
-    while True:
-        line = process.stdout.readline()
-        if not line and process.poll() is not None:
-            break
-        if line:
-            line = line.strip('\n')
-            with conversion_lock:
-                if line.startswith("Convertendo:"):
-                    conversion_status['processed_files'] += 1
-                    if total_files > 0:
-                        p = int((conversion_status['processed_files'] / total_files)*100)
-                    else:
-                        p = 0
-                    conversion_status['percentuale'] = p
-                conversion_status['log'].append(line)
-    process.wait()
-    with conversion_lock:
-        conversion_status['percentuale'] = 100
-        conversion_status['completed'] = True
-        conversion_status['log'].append("Conversão finalizzata.")
-
-@app.route('/conversor')
-@login_required
+# -----------------------------------------------------------------
+@app.route("/conversor", methods=["GET", "POST"])
 def conversor():
-    return render_template('conversor.html')
+    if not session.get("logged_in"):
+        return redirect(url_for("fazer_login"))
 
-@app.route('/inicia_conversao', methods=['POST'])
-@login_required
-def inicia_conversao():
-    global conversion_thread
-    input_dir = request.form.get('input_dir', '').strip()
-    output_dir = request.form.get('output_dir', '').strip()
-    if not input_dir:
-        flash("Errore: cartella di input obbligatoria.", "error")
-        return redirect(url_for('conversor'))
-    if not output_dir:
-        flash("Errore: cartella di output obbligatoria.", "error")
-        return redirect(url_for('conversor'))
-    if not os.path.isdir(input_dir):
-        flash("Errore: La cartella di input non esiste o non è valida.", "error")
-        return redirect(url_for('conversor'))
-    if not os.path.isdir(output_dir):
-        try:
-            os.makedirs(output_dir)
-        except Exception as e:
-            flash(f"Errore al creare la cartella di output: {e}", "error")
-            return redirect(url_for('conversor'))
-    if conversion_thread and conversion_thread.is_alive():
-        flash("Conversione già in corso!", "info")
-        return redirect(url_for('conversor'))
+    logs: list[str] = []
+    progress = 0
 
-    def thread_func():
-        run_conversion(input_dir, output_dir)
+    if request.method == "POST":
+        # ---------- 1. Recupera valori form ----------
+        dir_path  = request.form.get("percorso_input", "")
+        width     = request.form.get("width")   or None
+        height    = request.form.get("height")  or None
+        square    = "adatta_quadrato" in request.form
+        workers   = int(request.form.get("workers") or os.cpu_count())
 
-    conversion_thread = threading.Thread(target=thread_func)
-    conversion_thread.start()
-    flash("Conversione avviata. Guarda il log qui sotto.", "success")
-    return redirect(url_for('conversor'))
+        width  = int(width)  if width  else None
+        height = int(height) if height else None
 
-# ==================== EXTRA: Informazioni di Immagini ====================
+        # Profilo ICC: salvato in tmp
+        icc_profile_path = None
+        icc_file = request.files.get("icc_profile")
+        if icc_file and icc_file.filename:
+            tmpdir = tempfile.gettempdir()
+            icc_profile_path = os.path.join(
+                tmpdir, secure_filename(icc_file.filename)
+            )
+            icc_file.save(icc_profile_path)
+
+        # ---------- 2. Costruisci opzioni ----------
+        keep_aspect = False if (width and height) else True
+
+        opts = ConversionOptions(
+            width=width, height=height,
+            square=square, keep_aspect=keep_aspect,
+            skip_duplicates=True,
+            icc_profile=icc_profile_path,
+            workers=workers,
+            output_format="jpg",  # ← forza JPEG
+        )
+
+        # ---------- 3. Esegui conversione ----------
+        def _progress_cb(val):
+            nonlocal progress
+            progress = val                 # usato dal template
+
+        logs, stats = bulk_convert(dir_path, opts, _progress_cb)
+
+        flash(
+            f"Conversione terminata – "
+            f"{stats['converted']} ok, {stats['skipped']} saltati, "
+            f"{stats['error']} errori.", "success"
+        )
+        progress = 100
+
+    # ---------- 4. Render ----------
+    return render_template(
+        "conversor.html",
+        logs=logs,
+        progress=progress,
+        cpu_count=os.cpu_count()
+    )
+
+
+# ==================== INFO IMMAGINI (extra) ====================
 info_immagini_file = 'info_immagini.json'
-
 def carica_info_immagini():
     if os.path.exists(info_immagini_file):
         try:
@@ -1338,21 +1281,7 @@ def salva_info_immagine():
     except Exception as e:
         return jsonify({'status': 'error', 'msg': str(e)})
 
-@app.route('/stato_conversao')
-@login_required
-def stato_conversao():
-    with conversion_lock:
-        return jsonify({
-            'percentuale': conversion_status['percentuale'],
-            'log': conversion_status['log'],
-            'completed': conversion_status['completed'],
-            'total_files': conversion_status['total_files'],
-            'processed_files': conversion_status['processed_files']
-        })
-
-# ======================================================
-#   PARAMETRI
-# ======================================================
+# ==================== PARAMETRI (configura_parametri) ====================
 @app.route('/configura_parametri', methods=['GET'])
 @login_required
 def configura_parametri():
@@ -1497,7 +1426,7 @@ def recover_tutti():
     flash("Recuperate tutte le versioni .old per i file trovati.", 'success param')
     return redirect(url_for('configura_parametri'))
 
-# ======================== NOVA ROTA: LOGS ========================
+# ======================== LOGS ========================
 @app.route('/logs')
 @login_required
 def view_logs():
@@ -1534,30 +1463,21 @@ def view_logs():
         stats = {}
     return render_template('logs.html', logs=logs, date=query_date, search_term=search_term, stats=stats)
 
-# ======================================================
-#   PÁGINA DE GESTÃO DE USUÁRIOS
-# ======================================================
+# ======================== GESTIONE UTENTI ========================
 @app.route('/gestione_utenti', methods=['GET', 'POST'])
 @login_required
 def gestione_utenti():
-    """
-    Permite visualizzare la lista di utenti e aggiungere nuovi.
-    """
     if request.method == 'POST':
-        # Adicionar um novo usuário
         nome_nuovo = request.form.get('nome_nuovo', '').strip()
         password_nuova = request.form.get('password_nuova', '').strip()
-
         if not nome_nuovo or not password_nuova:
             flash('Nome utente e password sono obbligatori.', 'error')
             return redirect(url_for('gestione_utenti'))
-
         utenti = carica_utenti()
         for u in utenti:
             if u['username'] == nome_nuovo:
                 flash('Nome utente già esistente!', 'error')
                 return redirect(url_for('gestione_utenti'))
-
         utenti.append({'username': nome_nuovo, 'password': password_nuova})
         salva_utenti(utenti)
         flash('Utente aggiunto con successo!', 'success')
@@ -1583,308 +1503,148 @@ def rimuovi_utente():
         flash('Utente rimosso con successo!', 'success')
     return redirect(url_for('gestione_utenti'))
 
-# ============ NOVO: Import da parte generativa ============
-try:
-    # Instale as libs: diffusers, transformers, accelerate, torch, torchvision, safetensors
-    from diffusers import StableDiffusionPipeline
-    import torch
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+# ==================== AGENDAMENTO (APSCHEDULER) ====================
+from apscheduler.schedulers.background import BackgroundScheduler
 
-    logger.info("Carregando modelo Stable Diffusion (v1-5) para geração de imagens...")
-    model_name = "runwayml/stable-diffusion-v1-5"
-    pipe = StableDiffusionPipeline.from_pretrained(
-        model_name,
-        torch_dtype=torch.float16 if device=="cuda" else torch.float32
+reindicizzazione_programmata_progress = {
+    'percentuale': 0,
+    'log': [],
+    'completed': False
+}
+reindicizzazione_programmata_lock = threading.Lock()
+
+@app.route('/stato_reindicizzazione_programmata')
+@login_required
+def stato_reindicizzazione_programmata():
+    with reindicizzazione_programmata_lock:
+        return jsonify(reindicizzazione_programmata_progress.copy())
+
+def job_reindicizza_programmata():
+    logger.debug("job_reindicizza_programmata() disparado!")
+    with reindicizzazione_programmata_lock:
+        reindicizzazione_programmata_progress['percentuale'] = 0
+        reindicizzazione_programmata_progress['log'] = ["Reindicizzazione programmata avviata..."]
+        reindicizzazione_programmata_progress['completed'] = False
+
+    def run_scheduled():
+        try:
+            lista_paths = [d["path"] for d in directories_indicizzate]
+            indicizza_immagini(lista_paths, file_indice_faiss, file_percorsi, indicizzazione_interrompida)
+            with reindicizzazione_programmata_lock:
+                reindicizzazione_programmata_progress['percentuale'] = 100
+                reindicizzazione_programmata_progress['log'].append("Reindicizzazione programmata completata con successo.")
+                reindicizzazione_programmata_progress['completed'] = True
+        except Exception as e:
+            with reindicizzazione_programmata_lock:
+                reindicizzazione_programmata_progress['log'].append(f"Errore: {e}")
+                reindicizzazione_programmata_progress['percentuale'] = 100
+                reindicizzazione_programmata_progress['completed'] = True
+            logger.error("Errore reindicizza programmada: %s", e)
+
+    t = threading.Thread(target=run_scheduled)
+    t.start()
+
+def start_scheduler():
+    logger.debug("start_scheduler() -> Carregando pianificazione...")
+    carica_pianificazione()
+    days = schedule_data.get("days", [])
+    hour_str = schedule_data.get("hour", "00:00")
+
+    if not days or not hour_str:
+        logger.debug("Nenhum dia/hora programado => Scheduler não criou job")
+        return
+
+    day_map_ita = {
+        "Lunedì": "mon",
+        "Martedì": "tue",
+        "Mercoledì": "wed",
+        "Giovedì": "thu",
+        "Venerdì": "fri",
+        "Sabato": "sat",
+        "Domenica": "sun"
+    }
+    days_en = []
+    for d in days:
+        if d in day_map_ita:
+            days_en.append(day_map_ita[d])
+    day_of_week = ",".join(days_en)
+
+    h, m = 0, 0
+    try:
+        part = hour_str.split(":")
+        h = int(part[0])
+        m = int(part[1]) if len(part) > 1 else 0
+    except:
+        pass
+
+    logger.debug(f"Programando reindex com day_of_week={day_of_week}, hour={h}, minute={m}")
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        func=job_reindicizza_programmata,
+        trigger='cron',
+        day_of_week=day_of_week,
+        hour=h,
+        minute=m,
+        id='reindex_agendado',
+        replace_existing=True
     )
-    pipe.to(device)
-    logger.info(f"Modelo carregado com sucesso! Usando device={device}.")
-except Exception as e:
-    logger.error(f"Falha ao carregar modelo de difusão: {e}")
-    pipe = None
+    scheduler.start()
+    logger.debug("APScheduler iniciado. Jobs atuais: %s", scheduler.get_jobs())
 
-# ============ NOVA ROTA E PÁGINA DE GERAÇÃO DE IMAGENS ============
-@app.route('/geracao', methods=['GET', 'POST'])
+@app.route('/programmazione_indicizzazione')
 @login_required
-def geracao():
-    # Função para listar últimas 12 imagens geradas no "static/generated"
-    def ultimas_imagens_geradas(n=12):
-        gen_path = os.path.join("static", "generated")
-        if not os.path.isdir(gen_path):
-            return []
-        # Pega todos os .png
-        files = [f for f in os.listdir(gen_path) if f.lower().endswith('.png')]
-        # Ordena por data de modificação desc
-        files = sorted(files, key=lambda x: os.path.getmtime(os.path.join(gen_path, x)), reverse=True)
-        return files[:n]
+def programmazione_indicizzazione():
+    carica_pianificazione()
+    return render_template('programmazione_indicizzazione.html', schedule=schedule_data)
 
-    if request.method == 'POST':
-        if not pipe:
-            flash('Il modello di generazione non è caricato oppure si è verificato un errore.', 'error')
-            return render_template('geracao.html', generated_image=None, ultimas_imagens=ultimas_imagens_geradas())
-
-        prompt = request.form.get('prompt', '').strip()
-        risoluzione = request.form.get('risoluzione', '512x512').strip()
-
-        if not prompt:
-            flash('Inserisci un prompt valido.', 'error')
-            return render_template('geracao.html', generated_image=None, ultimas_imagens=ultimas_imagens_geradas())
-
-        # Parse da resolucao
-        # Exemplo "1920x1080" => h=1080, w=1920
-        try:
-            w_str, h_str = risoluzione.lower().split('x')
-            width = int(w_str)
-            height = int(h_str)
-        except:
-            # fallback
-            width, height = 512, 512
-
-        # Gera a imagem
-        try:
-            import torch
-            if device == "cuda":
-                with torch.autocast("cuda"):
-                    result = pipe(prompt, height=height, width=width, num_inference_steps=30)
-                    image = result.images[0]
-            else:
-                result = pipe(prompt, height=height, width=width, num_inference_steps=30)
-                image = result.images[0]
-
-            # Salva
-            import time, random, string
-            random_str = ''.join(random.choice(string.ascii_lowercase) for _ in range(6))
-            filename = f"generated_{int(time.time())}_{random_str}.png"
-            output_dir = os.path.join("static", "generated")
-            os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(output_dir, filename)
-            image.save(output_path)
-
-            flash('Immagine generata con successo!', 'success')
-            return render_template(
-                'geracao.html',
-                generated_image=url_for('static', filename=f"generated/{filename}"),
-                ultimas_imagens=ultimas_imagens_geradas()
-            )
-        except Exception as e:
-            logger.error(f"Erro generando immagine: {e}")
-            flash(f"Errore durante la generazione dell'immagine: {e}", 'error')
-            return render_template('geracao.html', generated_image=None, ultimas_imagens=ultimas_imagens_geradas())
-
-    else:
-        # GET
-        return render_template('geracao.html', generated_image=None, ultimas_imagens=ultimas_imagens_geradas())
-
-
-
-# ============ NOVA SEÇÃO: CONFIGURAÇÃO DA GENERAÇÃO (LoRA, etc.) ============
-
-@app.route("/stato_lora")
+@app.route('/salva_programmazione_indicizzazione', methods=['POST'])
 @login_required
-def stato_lora():
-    with lora_lock:
-        return jsonify({
-            "running": lora_progress["running"],
-            "percent": lora_progress["percent"],
-            "log": lora_progress["log"],
-            "completed": lora_progress["completed"]
-        })
-
-
-
-@app.route('/configurazione_generativa', methods=['GET', 'POST'])
-@login_required
-def configurazione_generativa():
-    """
-    Página onde o usuário escolhe quais diretórios indexados vão participar da
-    geração. Ex.: geramos e salvamos esse status em 'generative_dirs' no config.
-    Também há um botão para 'indexazione incrementale' (exemplo).
-    """
-    if request.method == 'POST':
-        # Recebe checkboxes
-        form_data = request.form
-        # Example: "enabled_<path>" = 'on'
-        generative_data = {}
-        for d in directories_indicizzate:
-            path_ = d["path"]
-            checkbox_name = f"enable_{path_}"
-            if checkbox_name in form_data:
-                generative_data[path_] = True
-            else:
-                generative_data[path_] = False
-
-        salva_configurazione_generativa(generative_data)
-        flash("Configurazione generativa salvata con successo!", "success")
-        return redirect(url_for('configurazione_generativa'))
-
-    else:
-        # GET => exibe a página
-        generative_data = carica_configurazione_generativa()
-        return render_template(
-            "configurazione_generativa.html",
-            directories_indicizzate=directories_indicizzate,
-            generative_data=generative_data
-        )
-
-
-
-
-# Exemplo de rota de "indexação incremental" para geração
-@app.route('/indicizza_generativa', methods=['POST'])
-@login_required
-def indicizza_generativa():
-    """
-    Faz uma pseudo "indexação incremental" focada para geração.
-    Aqui você poderia disparar um script de treino LoRA, etc.
-    Exemplo simples: logar e dar flash.
-    """
-    generative_data = carica_configurazione_generativa()
-    # Filtrar só as que estão 'true'
-    dirs_ativos = [k for k,v in generative_data.items() if v]
-    # Exemplo: rodar alguma rotina de "treino LoRA" nessas dirs_ativos...
-    logger.info(f"[GEN] Indexacao/treino gerativo com as dirs = {dirs_ativos}")
-    flash(f"Indexazione incrementale (generativa) avviata per {len(dirs_ativos)} directory.", "info")
-
-    return redirect(url_for('configurazione_generativa'))
-
-@app.route('/treino_lora', methods=['POST'])
-@login_required
-def treino_lora():
-    """
-    Roda train_lora.py em segundo plano (thread), exibe barra de progresso na página.
-    """
-    global lora_thread, lora_progress
-
-    # Lê pastas ativas
-    generative_data = carica_configurazione_generativa()
-    selected_dirs = [d for d, enabled in generative_data.items() if enabled]
-    if not selected_dirs:
-        flash("Nessuna directory selezionata per il training LoRA!", "error")
-        return redirect(url_for('configurazione_generativa'))
-
-    # Cria tmp folder
-    tmp_folder = f"/tmp/train_lora_dataset_{int(time.time())}"
-    os.makedirs(tmp_folder, exist_ok=True)
-    logger.info(f"Treino LoRA - Pasta temporária: {tmp_folder}")
-
-    # Copia imagens
-    exts = (".jpg", ".jpeg", ".png", ".bmp", ".webp")
-    total_imagens = 0
-    for dir_ in selected_dirs:
-        for root, dirs, files in os.walk(dir_):
-            for fname in files:
-                if fname.lower().endswith(exts):
-                    src_path = os.path.join(root, fname)
-                    new_name = os.path.basename(dir_) + "_" + fname
-                    dest_path = os.path.join(tmp_folder, new_name)
-                    try:
-                        shutil.copy2(src_path, dest_path)
-                        total_imagens += 1
-                    except Exception as e:
-                        logger.error(f"Erro copiando {src_path} => {dest_path}: {e}")
-
-    if total_imagens == 0:
-        flash("Não há imagens nas diretorias selecionadas para treino!", "error")
-        return redirect(url_for('configurazione_generativa'))
-
-    # Monta cmd
-    random_tag = ''.join(random.choice(string.ascii_lowercase) for _ in range(6))
-    output_lora_dir = f"./lora_output_{random_tag}"
-    instance_prompt = "fabricStyle"
-    cmd = [
-        "accelerate", "launch", "train_lora.py",
-        "--pretrained_model_name=runwayml/stable-diffusion-v1-5",
-        f"--train_data_dir={tmp_folder}",
-        f"--output_dir={output_lora_dir}",
-        f"--instance_prompt={instance_prompt}",
-        "--resolution=512",
-        "--train_batch_size=1",
-        "--gradient_accumulation_steps=1",
-        "--learning_rate=1e-4",
-        "--lr_scheduler=constant",
-        "--lr_warmup_steps=0",
-        "--max_train_steps=1000",
-    ]
-
-    logger.info(f"[TREINO_LORA] Iniciando thread com cmd: {' '.join(cmd)}")
-
-    # Reseta status
-    with lora_lock:
-        lora_progress["running"] = True
-        lora_progress["percent"] = 0
-        lora_progress["log"] = []
-        lora_progress["completed"] = False
-
-    def run_lora_training():
-        """
-        Função que efetivamente chama o train_lora.py com Popen e
-        atualiza lora_progress em tempo real.
-        """
-        try:
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True
-            )
-            # Ler stdout linha a linha
-            total_steps = 1000  # se quisermos deduzir % real, ou parse do log
-            while True:
-                line = process.stdout.readline()
-                if not line and process.poll() is not None:
-                    break
-                if line:
-                    line = line.rstrip("\n")
-                    with lora_lock:
-                        lora_progress["log"].append(line)
-
-                        # Exemplo: se encontrar "Step X/1000, loss=..." no log
-                        # podemos extrair X e calcular %.
-                        if "Step " in line and "loss=" in line:
-                            # Tenta parse do tipo "Step 50/1000, loss=0.1234"
-                            # isso depende do print do script train_lora.py
-                            try:
-                                # localiza "Step 50/1000"
-                                part = line.split("Step ")[1].split(",")[0].strip()
-                                # "50/1000"
-                                current, total = part.split("/")
-                                current_step = int(current)
-                                max_steps = int(total)
-                                perc = int((current_step / max_steps)*100)
-                                lora_progress["percent"] = perc
-                            except:
-                                pass
-
-            ret = process.wait()
-            with lora_lock:
-                lora_progress["completed"] = True
-                lora_progress["running"] = False
-                if ret == 0:
-                    lora_progress["log"].append(f"Treino LoRA finalizado com sucesso! Output em: {output_lora_dir}")
-                else:
-                    lora_progress["log"].append(f"Treino LoRA retornou erro (code={ret}).")
-        except Exception as e:
-            with lora_lock:
-                lora_progress["completed"] = True
-                lora_progress["running"] = False
-                lora_progress["log"].append(f"Exceção no treino LoRA: {e}")
-
-    # Dispara thread
-    global lora_thread
-    lora_thread = threading.Thread(target=run_lora_training)
-    lora_thread.start()
-
-    flash("Treino LoRA iniciado em segundo plano!", "info")
-    # Agora redireciona à mesma página, que fará AJAX para /stato_lora
-    return redirect(url_for('configurazione_generativa'))
-
-
-# ======================== Inicialização (Waitress) ========================
-if __name__ == '__main__':
-    # Garante que o usuário padrão exista (chickellero)
-    ensure_default_user()
-
-    from waitress import serve
-    logger.debug("[DEBUG] __main__ -> Chamando start_scheduler() para APScheduler.")
+def salva_programmazione_indicizzazione():
+    global schedule_data
+    days_selected = request.form.getlist('days')
+    hour_selected = request.form.get('ora_programmata', '00:00')
+    new_schedule = {"days": days_selected, "hour": hour_selected}
+    with schedule_lock:
+        schedule_data = new_schedule
+        salva_pianificazione(schedule_data)
+    logger.debug("Programma salvata => start_scheduler() novamente")
     start_scheduler()
+    flash('Programmazione salvata con successo.', 'success')
+    return redirect(url_for('programmazione_indicizzazione'))
+# -----------------------------------------------------------------------
+# rota /configura_categorie (exemplo)
+@ app.route("/configura_categorie", methods=["GET", "POST"])
+@login_required
+def configura_categorie():
+    if request.method == "POST":
+        tipo = request.form["tipo_config"]      # 'ricerca' | 'generativa'
+        data = json.loads(request.form["categorie_data"])
+        path = "static/categorie.json" if tipo=="ricerca" else \
+               "static/categorie_generativa.json"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        flash("Salvato!", "success")
+        return redirect(url_for("configura_categorie"))
+
+    # GET – carrega os dois arquivos
+    def _load(p):
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
+    return render_template(
+        "configura_categorie.html",
+        categorie_search=json.dumps(_load("static/categorie.json")),
+        categorie_gen=json.dumps(_load("static/categorie_generativa.json")),
+    )
+
+
+# ==================== MAIN (waitress) ====================
+if __name__ == '__main__':
+    ensure_default_user()
+    logger.debug("[DEBUG] Chamando start_scheduler() p/ APScheduler.")
+    start_scheduler()
+    from waitress import serve
     logger.debug("[DEBUG] Subindo waitress server na porta 5000...")
     serve(app, host='0.0.0.0', port=5000, threads=8)

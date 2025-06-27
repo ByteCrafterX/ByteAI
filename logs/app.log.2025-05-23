@@ -1,0 +1,19 @@
+[2025-05-23 18:03:55,707] DEBUG in app: Alias geracao → /geracao
+[2025-05-23 18:03:55,709] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-05-23 18:03:55,710] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-05-23 18:03:55,711] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-05-23 18:03:55,711] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-05-23 18:03:55,808] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-05-23 18:03:55,808] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-05-23 18:03:55,808] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-05-23 18:03:55,808] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-05-23 18:03:55,810] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-05-23 18:03:55,810] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-05-23 18:03:55,829] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-05-23 18:03:55,829] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-05-23 18:03:55,854] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-05-23 18:03:55,854] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-05-23 18:08:41,373] ERROR in app: Errore durante a pesquisa: value cannot be converted to type at::Half without overflow
+[2025-05-23 18:08:41,373] ERROR in app: Errore durante a pesquisa: value cannot be converted to type at::Half without overflow
+[2025-05-23 18:09:07,889] ERROR in app: Errore durante a reindicização: Cannot copy out of meta tensor; no data! Please use torch.nn.Module.to_empty() instead of torch.nn.Module.to() when moving module from meta to a different device.
+[2025-05-23 18:09:07,889] ERROR in app: Errore durante a reindicização: Cannot copy out of meta tensor; no data! Please use torch.nn.Module.to_empty() instead of torch.nn.Module.to() when moving module from meta to a different device.

@@ -160,3 +160,23 @@ Mixed precision type: no
 2025-03-19 08:55:05,687 - INFO - __main__ - Step 1000/1000, loss=0.5320
 2025-03-19 08:55:40,046 - INFO - __main__ - Step 1000/1000, loss=0.5320
 2025-03-19 08:56:29,030 - INFO - __main__ - Step 1000/1000, loss=0.5320
+2025-05-19 21:23:45,951 - INFO - __main__ - ===== Iniciando script train_lora.py (estilo DreamBooth + LoRA) =====
+2025-05-19 21:23:46,205 - INFO - __main__ - Distributed environment: DistributedType.NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cuda
+
+Mixed precision type: fp16
+
+2025-05-19 21:23:46,303 - INFO - __main__ - Criando dataset...
+2025-06-20 16:48:58,046 - INFO - __main__ - ===== Iniciando script train_lora.py (estilo DreamBooth + LoRA) =====
+2025-06-20 16:48:58,194 - INFO - __main__ - Distributed environment: DistributedType.NO
+Num processes: 1
+Process index: 0
+Local process index: 0
+Device: cuda
+
+Mixed precision type: fp16
+
+2025-06-20 16:48:58,279 - INFO - __main__ - Criando dataset...

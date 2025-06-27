@@ -1,406 +1,319 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <title>Risultati della Ricerca</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Risultati della Ricerca</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
-  <!-- Link para o CSS unificado -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
 
-  <!-- Fonte Orbitron -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+<script>addEventListener('load',()=>{const o=document.getElementById('loading-overlay');if(o)o.style.display='none';});</script>
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+<style>
+/* ---------- BARRA RETRÁCTIL ------------------------------------------ */
+.filt-wrap{position:sticky;top:70px;z-index:990;font-size:.9rem}
+.filt-toggle{background:#0067c5;color:#fff;border:none;border-radius:22px;
+             padding:6px 20px;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.25);}
+.filt-panel{background:#f7fafe;border-radius:12px;margin-top:6px;
+            box-shadow:0 2px 4px rgba(0,0,0,.15);overflow:hidden;
+            max-height:0;opacity:0;transition:max-height .25s ease,opacity .25s ease;}
+.filt-panel.open{max-height:320px;opacity:1;}
+.filt-row{display:flex;flex-wrap:wrap;gap:10px;padding:12px 16px;align-items:center}
+.filt-row select,.filt-row input[type=text]{padding:5px 6px;border:1px solid #8aa0c4;
+      border-radius:6px;min-width:120px;font:inherit}
+.btn-blue{background:#0067c5;color:#fff;border:none;border-radius:6px;
+          padding:6px 24px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.btn-blue:hover{filter:brightness(.93)}
+.filt-title{margin:6px 4px 2px;font-weight:600;color:#0067c5}
+
+/* ---------- TAGS & DIRECTORY PILLS ----------------------------------- */
+.pill,.tag{display:inline-block;padding:4px 11px;margin:3px 4px;border:1px solid #0067c5;
+           border-radius:14px;color:#0067c5;background:#e6efff;cursor:pointer;
+           transition:.15s}
+.pill.selected,.tag.selected{background:#28a745;border-color:#28a745;color:#fff}
+.hidden{display:none}
+
+/* ---------- RESPONSIVO ------------------------------------------------ */
+@media(max-width:620px){
+ .filt-row select,.filt-row input[type=text]{min-width:100px}
+ .btn-blue.apply{margin-left:0;width:100%}
+}
+</style>
 </head>
+
 <body class="light">
-  <!-- Spinner inicial -->
-  <div id="loading-overlay" style="display:flex;">
-    <div class="spinner"></div>
+
+<div id="loading-overlay" style="display:flex;"><div class="spinner"></div></div>
+
+<header>
+  <div class="container">
+    <a href="{{ url_for('index') }}" class="logo-link">
+      <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
+      <span class="brand-name">Studio Elle Ricerca Immagini</span>
+    </a>
+    <button id="menu-toggle" class="menu-toggle"><span></span><span></span><span></span></button>
+    <nav id="main-nav">
+      <ul>
+        <li><a href="{{ url_for('index') }}">Home</a></li>
+        <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
+        <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
+        <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
+        <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+        <li><a href="{{ url_for('about') }}">About</a></li>
+        <li><a href="{{ url_for('logout') }}" class="logout-link">Uscire</a></li>
+      </ul>
+    </nav>
   </div>
+</header>
 
-  <!-- Cabeçalho com menu retrátil -->
-  <header>
-    <div class="container">
-      <div class="logo-wrapper">
-        <a href="{{ url_for('index') }}" class="logo-link">
-          <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
-          <span class="brand-name">Studio Elle Ricerca Immagini</span>
-        </a>
-      </div>
+<h1 style="text-align:center;margin:22px 0 10px;">Risultati della Ricerca</h1>
 
-      <!-- Botão hamburguer -->
-      <button id="menu-toggle" class="menu-toggle">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+<!-- =================== BARRA DE FILTROS ============================== -->
+<div class="filt-wrap">
+  <button id="filt-toggle" class="filt-toggle">Filtri ▾</button>
 
-      <!-- Navegação principal -->
-      <nav id="main-nav">
-        <ul>
-          <li><a href="{{ url_for('index') }}">Home</a></li>
-          <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
-          <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
-          <li><a href="{{ url_for('about') }}">About</a></li>
-        </ul>
-      </nav>
+  <div id="filt-panel" class="filt-panel">
+    <div class="filt-row">
+      <input id="text-filter" type="text" placeholder="Testo libero…">
+      <select id="cat-filter"><option value="">Categoria…</option></select>
+      <select id="color-filter">
+        <option value="">Colore…</option>
+        {% for c in ['red','orange','yellow','green','cyan','blue','purple',
+                     'magenta','black','white','gray','brown'] %}
+          <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+      </select>
+      <button id="dir-btn" class="pill" style="margin-left:0;">Directory…</button>
+      <button id="apply-filters" class="btn-blue apply">Applica</button>
     </div>
-  </header>
 
-  <h1 style="text-align:center; margin-top:20px;">Risultati della Ricerca</h1>
+    <!-- TAGS -->
+    <div id="tags-area" class="hidden" style="padding:0 16px 8px;">
+      <div class="filt-title">Tag</div>
+      <div id="tags-box"></div>
+    </div>
 
-  <div class="gallery" id="gallery">
-    {% for img in immagini %}
-      <img
-        class="lazy-image"
-        data-src="/miniatura/{{ img.percorso_url | urlencode }}"
-        alt="Immagine"
-        data-percorso-originale="{{ img.percorso }}"
-        data-percorso-relativo="{{ img.percorso_url }}"
-        onclick="showDetails({{ loop.index0 }})"
-      >
-    {% endfor %}
-  </div>
-
-  <div id="sentinel"></div>
-  <div class="no-results" style="display:none;">Nessuna immagine trovata.</div>
-
-  <!-- Overlay e modal -->
-  <div class="overlay" onclick="closeDetails()"></div>
-  <div class="image-details">
-    <div class="image-details-content">
-      <div class="image-preview">
-        <img src="" alt="Immagine" id="image-detail">
-        <p id="image-info"></p>
-
-        <!-- Botão que aparece no mobile para exibir metadados -->
-        <button id="toggle-info-btn" class="mobile-info-button" onclick="toggleInfo()">Altre Informazioni</button>
-      </div>
-
-      <!-- Metadados -->
-      <div class="metadata-container" id="metadata-container">
-        <label>
-          <input type="checkbox" id="esclusiva-checkbox">
-          Immagine Esclusiva
-        </label>
-        <label for="data-scadenza">Data di Scadenza (es. 2024-12-31):</label>
-        <input type="date" id="data-scadenza">
-        <label for="note-immagine"><strong>Note:</strong></label>
-        <textarea id="note-immagine" rows="5"></textarea>
-
-        <button onclick="salvaMetadatiImmagine()">Salva Metadati</button>
-        <button style="margin-top:10px;" onclick="closeDetails()">Chiudi</button>
-      </div>
+    <!-- DIRECTORY PILLS -->
+    <div id="dirs-area" class="hidden" style="padding:0 16px 14px;">
+      <div class="filt-title">Directory</div>
+      <div id="dirs-box"></div>
     </div>
   </div>
+</div>
+<!-- ==================================================================== -->
 
-  <!-- Loading infinito -->
-  <div id="loading" style="display:none;">
-    <p>Caricamento in corso...</p>
+<div class="gallery" id="gallery">
+  {% for img in immagini %}
+    <img class="lazy-image{{ ' ocr-match' if img.extra_ocr_match else '' }}"
+         data-src="{{ url_for('miniatura', percorso=img.percorso_url) }}"
+         data-percorso-originale="{{ img.percorso }}"
+         data-percorso-relativo="{{ img.percorso_url }}"
+         alt="Immagine"
+         onclick="showDetails({{ loop.index0 }})">
+  {% endfor %}
+</div>
+<div id="sentinel"></div>
+<div class="no-results" style="display:none;">Nessuna immagine trovata.</div>
+
+<!-- MODAL --------------------------------------------------------------- -->
+<div class="overlay" onclick="closeDetails()"></div>
+<div class="image-details"><div class="image-details-content">
+  <div class="image-preview">
+    <img id="image-detail" alt="Immagine"><p id="image-info"></p>
+    <button id="toggle-info-btn" class="mobile-info-button" onclick="toggleInfo()">Altre Informazioni</button>
   </div>
+  <div class="metadata-container" id="metadata-container">
+    <label><input type="checkbox" id="esclusiva-checkbox"> Immagine Esclusiva</label>
+    <label for="data-scadenza">Data di Scadenza:</label><input type="date" id="data-scadenza">
+    <label for="note-immagine"><strong>Note:</strong></label><textarea id="note-immagine" rows="5"></textarea>
 
-  <!-- Rodapé -->
-  <div class="footer">
-    <p>&copy; 2025 Powered by FuturaForma. Tutti i diritti riservati.</p>
+    <button class="btn-blue" onclick="salvaMetadatiImmagine()">Salva Metadati</button>
+    <button id="simili-btn" class="btn-blue" style="margin-left:10px;" onclick="cercaSimili()">Cerca immagini simili</button>
+    <button class="btn-blue" style="margin-left:10px;background:#888;" onclick="closeDetails()">Chiudi</button>
   </div>
+</div></div>
 
-  <script>
-    // MENU RETRÁTIL
-    const menuToggle = document.getElementById('menu-toggle');
-    const mainNav = document.getElementById('main-nav');
-    menuToggle.addEventListener('click', () => {
-      mainNav.classList.toggle('open');
+<div id="loading" style="display:none;"><p>Caricamento in corso…</p></div>
+<div class="footer"><p>&copy; 2025 Powered by FuturaForma. Tutti i diritti riservati.</p></div>
+
+<!-- ===========================  SCRIPT  =============================== -->
+<script>
+const $=q=>document.querySelector(q);
+
+/* ---- barra retrátil -------------------------------------------------- */
+$('#filt-toggle').onclick=()=>{
+  $('#filt-panel').classList.toggle('open');
+  $('#filt-toggle').textContent=$('#filt-panel').classList.contains('open')?'Filtri ▴':'Filtri ▾';
+};
+
+/* ---- categorias & tags ---------------------------------------------- */
+const TAGS_URL="{{ url_for('static', filename='categorie.json') }}";
+const catSel=$('#cat-filter'),tagsArea=$('#tags-area'),tagsBox=$('#tags-box');
+fetch(TAGS_URL).then(r=>r.json()).then(j=>{
+  for(const c in j)catSel.append(new Option(c,c));
+  catSel.onchange=()=>{
+    tagsBox.innerHTML='';tagsArea.classList.add('hidden');
+    const c=catSel.value;if(c && j[c]){
+      j[c].tags.forEach(t=>{
+        const e=document.createElement('span');e.className='tag';e.textContent=t;
+        e.onclick=()=>e.classList.toggle('selected');tagsBox.appendChild(e);
+      });
+      tagsArea.classList.remove('hidden');
+    }
+  };
+});
+
+/* ---- diretórios ------------------------------------------------------ */
+const DIRS={{ directories_indicizzate|tojson }};
+const dirsArea=$('#dirs-area'),dirsBox=$('#dirs-box'),dirBtn=$('#dir-btn');
+dirBtn.onclick=()=>dirsArea.classList.toggle('hidden');
+DIRS.forEach(d=>{
+  const path=typeof d==='string'?d:d.path;
+  const nome=typeof d==='string'?'':(d.nome||'');
+  const lbl=nome||path.split(/[\\/]/).pop();
+  const s=document.createElement('span');s.className='pill';s.textContent=lbl;
+  s.title=path;s.dataset.path=path;
+  s.onclick=()=>s.classList.toggle('selected');
+  dirsBox.appendChild(s);
+});
+
+/* ---- aplicar filtros ------------------------------------------------- */
+$('#apply-filters').onclick=()=>{
+  const tags=[...tagsBox.querySelectorAll('.tag.selected')].map(e=>e.textContent);
+  const dirs=[...dirsBox.querySelectorAll('.pill.selected')].map(e=>e.dataset.path);
+  const payload={
+    text:$('#text-filter').value.trim(),
+    categoria:catSel.value,
+    tags:tags,
+    color:$('#color-filter').value?[$('#color-filter').value]:[],
+    dirs:dirs
+  };
+  fetch('/set_filtros_galeria',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)})
+   .then(()=>{if(location.pathname!='/galleria')location.href='/galleria';else location.reload();});
+};
+
+/* ========== NOVO: busca por similaridade ============================== */
+async function cercaSimili(){
+  if(currentImageIndex===null)return;
+  const d=imagesData[currentImageIndex];
+  const dirs=[...dirsBox.querySelectorAll('.pill.selected')].map(e=>e.dataset.path);
+
+  try{
+    await fetch('/ricerca_simili',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({path:d.percorso,dirs:dirs})
+    }).then(r=>r.text()).then(html=>{
+      document.open();document.write(html);document.close();
     });
+  }catch(e){alert('Errore: '+e);}
+}
 
-    console.log("[DEBUG] Carregando risultati.html script...");
+/* ---------------- restante JS igual ---------------------------------- */
+const PER_PAGE={{ per_page|default(100) }};
+let totalResults={{ total_resultados }};
+let currentIndex={{ immagini|length }};
+const gallery=$('#gallery');
+let imagesData=[],currentImageIndex=null,infoImmagini={};
 
-    let currentIndex = {{ immagini|length }};
-    let totalResults = {{ total_resultados }};
-    let perPage = 100;
-    const gallery = document.getElementById('gallery');
-    let imagesData = [];
-    let currentImageIndex = null;
-    let infoImmagini = {};
+$('#menu-toggle').addEventListener('click',()=>$('#main-nav').classList.toggle('open'));
 
-    // 1) Busca info_immagini do servidor
-    function fetchInfoImmagini() {
-        console.log("[DEBUG] Chamando /info_immagini para carregar metadados...");
-        fetch("{{ url_for('info_immagini') }}")
-            .then(res => res.json())
-            .then(data => {
-                console.log("[DEBUG] Recebemos infoImmagini:", data);
-                infoImmagini = data;
-                applicaEsclusivaSuGalleria();
-            })
-            .catch(err => console.error("[DEBUG] Errore nel caricare info_immagini:", err));
-    }
+function fetchInfoImmagini(){
+  fetch("{{ url_for('info_immagini') }}").then(r=>r.json()).then(d=>{infoImmagini=d;applEscl();});
+}
+function applEscl(){
+  const oggi=new Date().toISOString().split('T')[0];
+  document.querySelectorAll('.gallery img').forEach(img=>{
+    const info=infoImmagini[img.dataset.percorsoOriginale]||{};
+    const exc=info.esclusiva===true||info.esclusiva===1||info.esclusiva==="1"||info.esclusiva==="true";
+    img.classList.toggle('esclusiva',exc&&(!info.scadenza||info.scadenza>=oggi));
+  });
+}
 
-    // 2) Aplica 'esclusiva' conforme scadença
-    function applicaEsclusivaSuGalleria() {
-        const allImgs = document.querySelectorAll('.gallery img');
-        const oggi = new Date().toISOString().split('T')[0];
-        allImgs.forEach(img => {
-            const pathOriginale = img.dataset.percorsoOriginale;
-            const info = infoImmagini[pathOriginale];
-            if (info && info.esclusiva) {
-                const scadenza = info.scadenza || "";
-                if (!scadenza || scadenza >= oggi) {
-                    img.classList.add('esclusiva');
-                } else {
-                    img.classList.remove('esclusiva');
-                }
-            } else {
-                img.classList.remove('esclusiva');
-            }
-        });
-    }
-
-    // 3) Cria o elemento <img> para cada resultado
-    function createImageElement(imgData, index) {
-        const imgElement = document.createElement('img');
-        imgElement.dataset.src = '/miniatura/' + encodeURIComponent(imgData.percorso_url);
-        imgElement.alt = 'Immagine';
-        imgElement.dataset.percorsoOriginale = imgData.percorso;
-        imgElement.dataset.percorsoRelativo = imgData.percorso_url;
-        imgElement.dataset.index = index;
-        imgElement.classList.add('lazy-image');
-        imgElement.onclick = () => showDetails(index);
-        return imgElement;
-    }
-
-    // 4) Lazy loading
-    function observeImages() {
-        console.log("[DEBUG] observeImages() chamado.");
-        const lazyImages = document.querySelectorAll('.lazy-image');
-        const config = { rootMargin: '50px 0px', threshold: 0.01 };
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src;
-                    img.onload = () => {
-                        img.classList.add('loaded');
-                    };
-                    img.classList.remove('lazy-image');
-                    observer.unobserve(img);
-                }
-            });
-        }, config);
-        lazyImages.forEach(image => {
-            imageObserver.observe(image);
-        });
-    }
-
-    // 5) Infinite Scroll
-    function loadImages() {
-        console.log("[DEBUG] loadImages() -> currentIndex:", currentIndex, "/", totalResults);
-        if (currentIndex >= totalResults) {
-            console.log("[DEBUG] Já carregamos todas as imagens. Retornando.");
-            return;
-        }
-        document.getElementById('loading').style.display = 'block';
-
-        fetch('/carregar_mais_imagens', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 'current_index': currentIndex, 'per_page': perPage })
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("[DEBUG] /carregar_mais_imagens resposta:", data);
-            data.imagens.forEach((imgData) => {
-                imagesData.push(imgData);
-                const index = imagesData.length - 1;
-                const imgElement = createImageElement(imgData, index);
-                gallery.appendChild(imgElement);
-            });
-            currentIndex += data.imagens.length;
-            document.getElementById('loading').style.display = 'none';
-            observeImages();
-            applicaEsclusivaSuGalleria();
-
-            if (currentIndex >= totalResults) {
-                const sentinel = document.getElementById('sentinel');
-                if (sentinel) {
-                    sentinel.remove();
-                }
-                const endMessage = document.createElement('p');
-                endMessage.textContent = 'Non ci sono più immagini da caricare.';
-                endMessage.style.textAlign = 'center';
-                gallery.appendChild(endMessage);
-            }
-        })
-        .catch(error => {
-            console.error('[DEBUG] Errore:', error);
-            document.getElementById('loading').style.display = 'none';
-        });
-    }
-
-    // 6) Observa o sentinel
-    function observeSentinel() {
-        console.log("[DEBUG] observeSentinel() chamado.");
-        const sentinel = document.getElementById('sentinel');
-        const observerOptions = { root: null, rootMargin: '200px', threshold: 0 };
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    console.log("[DEBUG] sentinel isIntersecting -> loadImages()");
-                    loadImages();
-                }
-            });
-        }, observerOptions);
-        observer.observe(sentinel);
-    }
-
-    // 7) window.onload
-    window.onload = function() {
-        console.log("[DEBUG] window.onload disparou. Iniciando setup...");
-
-        const initialImages = document.querySelectorAll('.gallery img');
-        initialImages.forEach((img, index) => {
-            const pathOriginale = img.dataset.percorsoOriginale;
-            const pathUrl = img.dataset.percorsoRelativo;
-            imagesData.push({ 'percorso': pathOriginale, 'percorso_url': pathUrl });
-            img.dataset.index = index;
-            img.onclick = () => showDetails(index);
-        });
-
-        observeImages();
-        observeSentinel();
-        fetchInfoImmagini();
-
-        // Oculta o overlay do spinner inicial
-        const loadingOverlay = document.getElementById('loading-overlay');
-        loadingOverlay.style.display = 'none';
-        console.log("[DEBUG] window.onload finalizado. Spinner ocultado.");
-    };
-
-    // 8) Modal: exibir detalhes
-    function showDetails(index) {
-        console.log("[DEBUG] showDetails() -> index=", index);
-
-        // EVITA abrirmos modal se não houver imagens ou se o índice é inválido
-        if (!imagesData.length) {
-          console.log("[DEBUG] Nenhuma imagem carregada, showDetails ignorado.");
-          return;
-        }
-        if (index < 0 || index >= imagesData.length) {
-          console.log("[DEBUG] Índice fora do range, showDetails ignorado.");
-          return;
-        }
-
-        currentImageIndex = index;
-        const imgData = imagesData[index];
-
-        const details = document.querySelector('.image-details');
-        const overlay = document.querySelector('.overlay');
-        const imgDetail = document.getElementById('image-detail');
-        const imgInfo = document.getElementById('image-info');
-
-        // Carrega imagem maior (resolução total)
-        imgDetail.src = '/immagini/' + encodeURIComponent(imgData.percorso_url);
-
-        const percorsoOriginale = imgData.percorso;
-        imgInfo.textContent = `Percorso: ${percorsoOriginale}`;
-
-        const info = infoImmagini[percorsoOriginale] || {};
-        document.getElementById('esclusiva-checkbox').checked = !!info.esclusiva;
-        document.getElementById('data-scadenza').value = info.scadenza || "";
-        document.getElementById('note-immagine').value = info.note || "";
-
-        details.style.display = 'block';
-        overlay.style.display = 'block';
-
-        // Breve timeout para o CSS conseguir aplicar a animação
-        setTimeout(() => {
-            details.classList.add('open');
-            overlay.classList.add('open');
-        }, 10);
-    }
-
-    // 9) Fechar modal
-    function closeDetails() {
-        console.log("[DEBUG] closeDetails() chamado");
-        const details = document.querySelector('.image-details');
-        const overlay = document.querySelector('.overlay');
-
-        details.classList.remove('open');
-        overlay.classList.remove('open');
-
-        setTimeout(() => {
-            details.style.display = 'none';
-            overlay.style.display = 'none';
-            currentImageIndex = null;
-
-            // Se estivermos no mobile e a metadata estiver aberta, fecha
-            const metadataDiv = document.getElementById('metadata-container');
-            metadataDiv.classList.remove('show-mobile');
-        }, 400);
-    }
-
-    // 10) Salvar Metadati
-    function salvaMetadatiImmagine() {
-        if (currentImageIndex === null) return;
-        const imgData = imagesData[currentImageIndex];
-        const percorsoOriginale = imgData.percorso;
-
-        const esclusiva = document.getElementById('esclusiva-checkbox').checked;
-        const scadenza = document.getElementById('data-scadenza').value.trim();
-        const note = document.getElementById('note-immagine').value.trim();
-
-        console.log("[DEBUG] Salvando metadados:", { esclusiva, scadenza, note });
-
-        fetch("{{ url_for('salva_info_immagine') }}", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 'percorso': percorsoOriginale, 'esclusiva': esclusiva, 'scadenza': scadenza, 'note': note })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'ok') {
-                infoImmagini[percorsoOriginale] = { esclusiva, scadenza, note };
-                applicaEsclusivaSuGalleria();
-                alert("Metadati salvati con successo.");
-            } else {
-                alert("Errore nel salvare i metadati: " + (data.msg || ''));
-            }
-        })
-        .catch(err => {
-            console.error("Errore nel salvare metadati:", err);
-            alert("Errore nel salvare metadati, verifica console.");
-        });
-    }
-
-    // 11) Função para exibir/esconder metadados no mobile
-    function toggleInfo() {
-        const metadataDiv = document.getElementById('metadata-container');
-        metadataDiv.classList.toggle('show-mobile');
-    }
-
-    // Navegação por setas (opcional)
-    function nextImage() {
-        if (currentImageIndex !== null && currentImageIndex < imagesData.length - 1) {
-            showDetails(currentImageIndex + 1);
-        }
-    }
-    function prevImage() {
-        if (currentImageIndex !== null && currentImageIndex > 0) {
-            showDetails(currentImageIndex - 1);
-        }
-    }
-    document.addEventListener('keydown', (event) => {
-        if (currentImageIndex !== null) {
-            if (event.key === 'ArrowRight') {
-                nextImage();
-            } else if (event.key === 'ArrowLeft') {
-                prevImage();
-            } else if (event.key === 'Escape') {
-                closeDetails();
-            }
-        }
+function observeImages(){
+  const io=new IntersectionObserver((es,obs)=>{
+    es.forEach(e=>{
+      if(e.isIntersecting){
+        const i=e.target;
+        i.src=i.dataset.src;i.onload=()=>i.classList.add('loaded');
+        i.classList.remove('lazy-image');obs.unobserve(i);
+      }
     });
-  </script>
+  },{rootMargin:'50px',threshold:0.01});
+  document.querySelectorAll('.lazy-image').forEach(i=>io.observe(i));
+}
+
+function loadImages(){
+  if(currentIndex>=totalResults)return;
+  $('#loading').style.display='block';
+  fetch('/carregar_mais_imagens',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({current_index:currentIndex,per_page:PER_PAGE})})
+   .then(r=>r.json()).then(d=>{
+     d.imagens.forEach(it=>{
+       imagesData.push(it);gallery.appendChild(createImg(it,imagesData.length-1));
+     });
+     currentIndex+=d.imagens.length;$('#loading').style.display='none';
+     if(!d.end){observeImages();applEscl();}
+   });
+}
+new IntersectionObserver(e=>e[0].isIntersecting&&loadImages(),
+                        {rootMargin:'200px'}).observe($('#sentinel'));
+
+function createImg(d,i){
+  const el=document.createElement('img');
+  el.dataset.src="{{ url_for('miniatura', percorso='') }}"+encodeURIComponent(d.percorso_url);
+  el.dataset.percorsoOriginale=d.percorso;
+  el.dataset.percorsoRelativo=d.percorso_url;
+  el.dataset.index=i;
+  el.className='lazy-image'+(d.extra_ocr_match?' ocr-match':'');
+  el.onclick=()=>showDetails(i);return el;
+}
+
+function showDetails(i){
+  if(i<0||i>=imagesData.length)return;
+  currentImageIndex=i;const d=imagesData[i];
+  $('#image-detail').src="{{ url_for('immagini', percorso='') }}"+encodeURIComponent(d.percorso_url);
+  $('#image-info').textContent="Percorso: "+d.percorso;
+  const info=infoImmagini[d.percorso]||{};
+  $('#esclusiva-checkbox').checked=!!info.esclusiva;
+  $('#data-scadenza').value=info.scadenza||"";$('#note-immagine').value=info.note||"";
+  $('.overlay').classList.add('open');
+  const det=$('.image-details');det.style.display='block';setTimeout(()=>det.classList.add('open'),10);
+}
+function closeDetails(){$('.overlay').classList.remove('open');const det=$('.image-details');
+ det.classList.remove('open');setTimeout(()=>det.style.display='none',400);currentImageIndex=null;}
+function toggleInfo(){$('#metadata-container').classList.toggle('show-mobile');}
+function salvaMetadatiImmagine(){
+  if(currentImageIndex===null)return;
+  const d=imagesData[currentImageIndex];
+  fetch("{{ url_for('salva_info_immagine') }}",{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({percorso:d.percorso,
+                             esclusiva:$('#esclusiva-checkbox').checked,
+                             scadenza:$('#data-scadenza').value.trim(),
+                             note:$('#note-immagine').value.trim()})})
+   .then(r=>r.json()).then(j=>{if(j.status==='ok'){alert('Metadati salvati');fetchInfoImmagini();}});
+}
+
+addEventListener('keydown',ev=>{
+  if(currentImageIndex!==null){
+     if(ev.key==='ArrowRight'&&currentImageIndex<imagesData.length-1)showDetails(currentImageIndex+1);
+     else if(ev.key==='ArrowLeft'&&currentImageIndex>0)showDetails(currentImageIndex-1);
+     else if(ev.key==='Escape')closeDetails();
+  }
+});
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.gallery img').forEach((img,idx)=>{
+    imagesData.push({percorso:img.dataset.percorsoOriginale,
+                     percorso_url:img.dataset.percorsoRelativo,
+                     extra_ocr_match:img.classList.contains('ocr-match')});
+    img.dataset.index=idx;img.onclick=()=>showDetails(idx);
+  });
+  observeImages();fetchInfoImmagini();
+});
+</script>
 </body>
 </html>

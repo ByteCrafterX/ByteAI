@@ -1,36 +1,45 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <title>ByteAI ABOUT</title>
-    <!-- Meta tag para responsividade -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Link para o arquivo CSS unificado -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
-    <!-- Importação da fonte Orbitron (já está no styles.css, mas sem problemas) -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+  <meta charset="UTF-8">
+  <title>Risultati della Ricerca</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
 </head>
-<body>
-    <header>
-        <div class="container">
-            <a href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
-                <span class="brand-name">Studio Elle Ricerca Immagini</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="{{ url_for('index') }}">Home</a></li>
-                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
-                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
-                    <li><a href="{{ url_for('about') }}">About</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+<script>
+window.addEventListener('load', ()=>{
+    const lo = document.getElementById('loading-overlay');
+    if (lo) lo.style.display = 'none';
+});
+</script>
+<body class="light">
+  <div id="loading-overlay" style="display:flex;"><div class="spinner"></div></div>
+
+  <header>
+    <div class="container">
+      <a href="{{ url_for('index') }}" class="logo-link">
+        <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
+        <span class="brand-name">Studio Elle Ricerca Immagini</span>
+      </a>
+
+      <button id="menu-toggle" class="menu-toggle"><span></span><span></span><span></span></button>
+
+      <nav id="main-nav">
+        <ul>
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
+          <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
+          <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
+          <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+          <li><a href="{{ url_for('about') }}">About</a></li>
+          <li><a href="{{ url_for('logout') }}" style="color:red;">Uscire</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
 
     <div class="container">
         <h1>Benvenuti a ByteAI</h1>

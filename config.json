@@ -13,12 +13,16 @@
     },
     "directories_indicizzate": [
         {
-            "path": "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)",
-            "nome": "STUDIO ELLE RGB"
+            "path": "C:\\Users\\JUBIS\\PycharmProjects\\ByteAI\\static\\generated",
+            "nome": "imagens geradas"
         },
         {
-            "path": "/home/marco-alecsander/Scrivania/",
-            "nome": "DESKTOP"
+            "path": "C:\\Users\\JUBIS\\Desktop\\st\\STUDIO ELLE RGB MENAGGIO (JPG)",
+            "nome": "STUDIO ELLE"
+        },
+        {
+            "path": "C:\\Users\\JUBIS\\Desktop\\LETTURA ETIQUECHE",
+            "nome": ""
         }
     ],
     "users": [
@@ -33,7 +37,8 @@
         }
     ],
     "generative_dirs": {
-        "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)": true,
-        "/home/marco-alecsander/Scrivania/": false
+        "C:\\Users\\JUBIS\\PycharmProjects\\ByteAI\\static\\generated": false,
+        "C:\\Users\\JUBIS\\Desktop\\st\\STUDIO ELLE RGB MENAGGIO (JPG)": true,
+        "C:\\Users\\JUBIS\\Desktop\\LETTURA ETIQUECHE": true
     }
 }

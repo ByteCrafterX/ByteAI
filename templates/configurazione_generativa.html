@@ -5,6 +5,12 @@
     <title>Configurazione Generativa</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+<script>
+window.addEventListener('load', ()=>{
+    const lo = document.getElementById('loading-overlay');
+    if (lo) lo.style.display = 'none';
+});
+</script>
 <body>
     <header>
         <div class="container">
@@ -73,7 +79,8 @@
         <hr>
         <h3>Indexazione Incrementale per Generazione</h3>
         <p>Avvia un processo di training/ri-training leggero (ad es. LoRA) o altre procedure personalizzate.</p>
-        <form action="{{ url_for('indicizza_generativa') }}" method="POST" style="display:inline-block;">
+        <form action="{{ url_for('indicizzazione') }}" method="POST" style="display:inline-block;">
+
             <button type="submit" class="button-blue">Inizia Indexazione Incrementale</button>
         </form>
 

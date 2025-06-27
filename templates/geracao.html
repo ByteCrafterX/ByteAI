@@ -1,153 +1,296 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <title>Generazione di Immagini</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8">
+  <title>Risultati della Ricerca</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
 </head>
-<body>
-    <header>
-        <div class="container">
-            <a href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
-                <span class="brand-name">Studio Elle - Generativa</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="{{ url_for('index') }}">Home</a></li>
-                    <li><a href="{{ url_for('logout') }}" style="color:red;">Logout</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+<script>
+window.addEventListener('load', ()=>{
+    const lo = document.getElementById('loading-overlay');
+    if (lo) lo.style.display = 'none';
+});
+</script>
+<body class="light">
+  <div id="loading-overlay" style="display:flex;"><div class="spinner"></div></div>
 
-    <main class="container" style="margin-top: 30px;">
-        <h2>Generazione di Immagini (IA)</h2>
+  <header>
+    <div class="container">
+      <a href="{{ url_for('index') }}" class="logo-link">
+        <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
+        <span class="brand-name">Studio Elle Ricerca Immagini</span>
+      </a>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="messages">
-            {% for category, message in messages %}
-              <div class="message {{ category }}">{{ message }}</div>
-            {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
+      <button id="menu-toggle" class="menu-toggle"><span></span><span></span><span></span></button>
 
-        <!-- Form para gerar imagem -->
-        <form id="generate-form" method="POST" onsubmit="return startGeneration()">
-            <label for="prompt">Inserisci il Prompt:</label>
-            <input type="text" id="prompt" name="prompt" placeholder="Descrivi l'immagine..." required>
-
-            <label for="risoluzione-select">Seleziona la risoluzione:</label>
-            <select id="risoluzione-select" name="risoluzione" required>
-                <option value="512x512">512 x 512</option>
-                <option value="768x768">768 x 768</option>
-                <option value="1024x1024">1024 x 1024</option>
-                <option value="1920x1080">1920 x 1080 (Full HD)</option>
-            </select>
-
-            <button type="submit" class="button-blue" style="width:100%; margin-top:15px;">
-                Genera Immagine
-            </button>
-        </form>
-
-        <!-- Barra de Progresso -->
-        <div id="generation-progress" style="display:none; margin-top: 30px;">
-            <div id="progress-bar" style="width:100%; background:#ddd; height:22px; border-radius:5px; overflow:hidden; margin-bottom:10px;">
-                <div id="progress-fill" style="width:0%; background:#4A90E2; height:100%; transition: width 0.3s;"></div>
-            </div>
-            <p id="progress-text" style="text-align:center; font-weight:bold;">Preparando la magia...</p>
-        </div>
-
-        <!-- Exibição da imagem gerada -->
-        <div id="image-result" style="margin-top:40px; text-align:center;">
-            {% if generated_image %}
-                <h3>Immagine Generata:</h3>
-                <img src="{{ generated_image }}" alt="Immagine Generata" style="max-width: 70%; border: 1px solid #ccc; border-radius:8px;">
-            {% endif %}
-        </div>
-
-        <!-- Galeria das últimas imagens geradas -->
-        <hr style="margin:40px 0;">
-        <h3>Galleria delle Ultime Immagini Generate</h3>
-        <div class="gallery" id="generated-gallery">
-            {% for img in ultimas_imagens %}
-            <img
-                style="cursor:pointer; width:200px; margin:5px; border-radius:8px;"
-                src="{{ url_for('static', filename='generated/' ~ img) }}"
-                alt="img generata"
-                onclick="viewFullImage('{{ url_for('static', filename='generated/' ~ img) }}')"
-            >
-            {% endfor %}
-            {% if not ultimas_imagens %}
-            <p style="text-align:center; color:#666;">Nessuna immagine generata di recente.</p>
-            {% endif %}
-        </div>
-
-    </main>
-
-    <!-- Overlay simples pra visualização fullscreen -->
-    <div id="overlay-full" class="overlay" style="display:none;" onclick="closeFullImage()">
-        <img id="overlay-img" style="max-width:90%; max-height:90%; margin:auto; display:block; border-radius:8px;">
+      <nav id="main-nav">
+        <ul>
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
+          <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
+          <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
+          <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+          <li><a href="{{ url_for('about') }}">About</a></li>
+          <li><a href="{{ url_for('logout') }}" style="color:red;">Uscire</a></li>
+        </ul>
+      </nav>
     </div>
+  </header>
 
-    <script>
-        function startGeneration() {
-            // Exibir barra de progresso
-            document.getElementById('generation-progress').style.display = 'block';
-            document.getElementById('progress-fill').style.width = '0%';
-            document.getElementById('progress-text').textContent = 'Preparando la magia...';
 
-            // Iniciar checagem do progresso
-            checkProgress();
-            return true; // prosseguir com o submit
-        }
+<div class="messages">
+  {% with m=get_flashed_messages(with_categories=true) %}
+    {% for c,t in m %}<div class="message {{c}}">{{t}}</div>{% endfor %}
+  {% endwith %}
+</div>
 
-        function checkProgress() {
-            const phrases = [
-                "Stiamo quasi arrivando...",
-                "Un attimo, stiamo raccogliendo i pixel...",
-                "La creatività è in corso...",
-                "Applica i colori... Eccellente!",
-                "Solo un altro pizzico di pazienza...",
-                "Piccoli tocchi di arte digitale...",
-                "Ancora un momento, quasi finito...",
-                "Ti porteremo un capolavoro!",
-                "Poche pennellate finali..."
-            ];
-            let phraseIndex = 0;
-            // Atualizar progress de 0 a 100% num loop fictício
-            let progress = 0;
+<main id="gen-main">
 
-            const intervalId = setInterval(() => {
-                progress += 3;
-                if (progress > 100) progress = 100;
+<form id="generate-form"
+      method="POST"
+      enctype="multipart/form-data"
+      onsubmit="return validateAndStart();">
 
-                document.getElementById('progress-fill').style.width = progress + '%';
+  <!-- prompt -->
+  <input id="prompt" name="prompt" type="text" placeholder="Descrivi l’immagine…"
+         list="snips">
+  <datalist id="snips">{% for s in snippets %}<option value="{{s}}">{% endfor %}</datalist>
 
-                // Muda frase de vez em quando
-                if (progress < 100) {
-                    document.getElementById('progress-text').textContent = phrases[phraseIndex];
-                } else {
-                    document.getElementById('progress-text').textContent = "Completato!";
-                    clearInterval(intervalId);
-                }
+  <!-- categoria -->
+  <select name="categoria" id="categoria-select" onchange="caricaTagsGer()">
+    <option value="">-- Seleziona una categoria (opzionale) --</option>
+    {% for nome in categorie %}<option value="{{nome}}">{{nome}}</option>{% endfor %}
+  </select>
 
-                phraseIndex = (phraseIndex + 1) % phrases.length;
-            }, 1200); // a cada 1.2s muda frase
-        }
+  <!-- Immagine Base -->
+  <div class="row-flex" style="margin-top:15px;">
+    <label for="base-image-input" style="flex-shrink:0;">Immagine Base:</label>
+    <input type="file" name="base_image" id="base-image-input" accept="image/*">
+  </div>
+  <p id="base-image-preview" style="display:none; margin:5px 0;">
+    <strong>Anteprima Base:</strong><br>
+    <img id="base-preview-img" src="" style="max-width:200px; border:1px solid #ccc;" alt="Preview">
+  </p>
 
-        function viewFullImage(src) {
-            const overlay = document.getElementById('overlay-full');
-            const img = document.getElementById('overlay-img');
-            img.src = src;
-            overlay.style.display = 'flex';
-        }
-        function closeFullImage() {
-            const overlay = document.getElementById('overlay-full');
-            overlay.style.display = 'none';
-        }
-    </script>
+  <!-- resolução -->
+  <div class="row-flex">
+    <select id="risoluzione-select" name="risoluzione">
+      <option>512x512</option><option>768x768</option>
+      <option>1024x1024</option><option value="custom">Personalizza…</option>
+    </select>
+    <div id="custom-res" style="display:none;">
+      <input name="custom_w" type="number" placeholder="larg" min="256" max="4096" step="64"> ×
+      <input name="custom_h" type="number" placeholder="alt"  min="256" max="4096" step="64">
+    </div>
+  </div>
+
+  <!-- opções avançadas (SEM checkbox de anteprima) -->
+  <details><summary>Opzioni Avanzate</summary>
+    <div class="adv-grid">
+      <label>Steps <input name="steps" type="number" value="30" min="10" max="60"></label>
+      <label>CFG   <input name="cfg"   type="number" step="0.5" value="8" min="3" max="14"></label>
+      <label>Seed  <input name="seed"  type="number" value="-1"></label>
+      <label><input type="checkbox" name="hd_mode"> HD-Mode</label>
+
+      {% if not low_vram %}
+        <label><input type="checkbox" name="use_esrgan"> Upscaler ×4</label>
+        <label><input type="checkbox" name="use_controlnet_tile"> ControlNet tile</label>
+      {% endif %}
+    </div>
+  </details>
+
+  <!-- hidden-tags -->
+  <input type="hidden" name="tags_selezionate" id="tags-selezionate-input">
+
+  <button class="button-blue" type="submit">Genera Immagine</button>
+</form>
+
+<!-- TAGS BOX -->
+<div class="tags-container" id="tags-container" style="display:none;">
+  <h3>Tag della Categoria</h3>
+  <button id="select-all-tags" type="button">Seleziona Tutto</button>
+  <div id="tags-list"></div>
+</div>
+
+<!-- PROGRESSO -->
+<div id="generation-progress" style="display:none;">
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+  <p id="progress-text">Prepariamo la magia…</p>
+</div>
+<div id="mosaic-container"></div>
+
+<!-- RESULTADO -->
+{% if generated_image %}
+  <h3 style="margin-top:30px">Immagine Generata</h3>
+  <img src="{{ generated_image }}" id="img-final" class="result-img" alt="generated">
+
+  <!-- botão para criar preview -->
+  <button id="btn-gen-preview" class="button-blue" style="margin-top:15px;"
+          onclick="generatePreview()">Genera anteprima 4×4</button>
+
+  <!-- preview box (canvas + download) -->
+  <div id="preview-box">
+    <h4>Anteprima 4 × 4</h4>
+    <canvas id="tile-canvas" width="2048" height="2048"></canvas><br>
+    <a id="dl-preview" class="button-blue" download="preview.png">Scarica Anteprima</a>
+  </div>
+{% endif %}
+
+<!-- GALERIA -->
+<section id="thumbs-grid">
+  {% for img in ultimas_imagens %}
+    <img data-src="{{ url_for('static', filename='generated/' ~ img) }}"
+         loading="lazy" data-idx="{{ loop.index0 }}"
+         onclick="openOverlay(this.dataset.idx)">
+  {% endfor %}
+</section>
+
+</main>
+
+<!-- OVERLAY -->
+<div id="overlay-full" class="overlay">
+  <button class="nav-arrow left" id="prev-btn">‹</button>
+  <img id="overlay-img">
+  <button class="nav-arrow right" id="next-btn">›</button>
+</div>
+
+<script>
+/* ======== CATEGORIE & TAGS ======== */
+(() => {
+  const TAGS = {{ categorie|tojson }};
+  const selCat = document.getElementById('categoria-select'),
+        list   = document.getElementById('tags-list'),
+        hid     = document.getElementById('tags-selezionate-input'),
+        box     = document.getElementById('tags-container'),
+        btnAll  = document.getElementById('select-all-tags'),
+        promptIn = document.getElementById('prompt');
+
+  window.caricaTagsGer = () => {
+    list.innerHTML = ''; hid.value = '';
+    const c = selCat.value;
+    if (!c || !TAGS[c] || !TAGS[c].tags.length) {
+      box.style.display = 'none'; return;
+    }
+    TAGS[c].tags.forEach(t => {
+      const s = document.createElement('span');
+      s.className = 'tag'; s.textContent = t;
+      s.onclick = () => s.classList.toggle('selected');
+      list.appendChild(s);
+    });
+    box.style.display = 'block';
+  };
+
+  btnAll.onclick = () => {
+    const tg = [...list.querySelectorAll('.tag')],
+          selSome = tg.some(t => !t.classList.contains('selected'));
+    tg.forEach(t => t.classList.toggle('selected', selSome));
+  };
+
+  window.validateAndStart = () => {
+    const sel = [...list.querySelectorAll('.tag.selected')].map(t => t.textContent);
+    hid.value = sel.join(',');
+    if (!promptIn.value.trim() && !selCat.value) {
+      alert('Inserisci un prompt o seleziona una categoria'); return false;
+    }
+    return startGeneration();
+  };
+})();
+
+/* ======== PREVIEW Immagine Base ======== */
+document.getElementById('base-image-input').onchange = evt => {
+  const [file] = evt.target.files;
+  if (!file) {
+    document.getElementById('base-image-preview').style.display = 'none';
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  const img = document.getElementById('base-preview-img');
+  img.src = url;
+  document.getElementById('base-image-preview').style.display = 'block';
+};
+
+/* ======== CUSTOM SIZE TOGGLE ======== */
+document.getElementById('risoluzione-select').onchange = e => {
+  document.getElementById('custom-res').style.display =
+    e.target.value==='custom'?'flex':'none';
+};
+
+/* ======== MOSAICO ======== */
+let squares=[],mosaicInit=false,tot=0;
+function initMosaic(){
+  const c=document.getElementById('mosaic-container');c.innerHTML='';squares=[];
+  for(let y=0;y<512;y+=32)for(let x=0;x<512;x+=32){
+    const d=document.createElement('div');d.className='square';
+    d.style.left=x+'px';d.style.top=y+'px';c.appendChild(d);squares.push(d);}
+  c.style.display='block';mosaicInit=true;tot=squares.length;
+}
+function updateMosaic(p){
+  if(!mosaicInit)return;
+  const goal=Math.floor(tot*p/100);
+  while(tot-squares.length<goal && squares.length){
+    const i=Math.random()*squares.length|0;
+    squares[i].style.opacity=0;squares.splice(i,1);
+  }
+}
+
+/* ======== PROGRESS BAR ======== */
+let poll=null,idx=0,
+    frasi=['Stiamo quasi arrivando…','Raccogliamo i pixel…',
+           'Creatività in corso…','Quasi finito…','Sta nascendo un capolavoro!'];
+function startGeneration(){
+  document.getElementById('generation-progress').style.display='block';
+  initMosaic();
+  poll=setInterval(()=>fetch("{{ url_for('geracao_bp.stato_generazione') }}")
+    .then(r=>r.json()).then(d=>{
+      document.getElementById('progress-fill').style.width=d.percent+'%';
+      updateMosaic(d.percent);
+      if(d.done){clearInterval(poll);location.reload();}
+    }),800);
+  setInterval(()=>document.getElementById('progress-text').textContent=
+    frasi[++idx%frasi.length],2000);
+  return true;
+}
+
+/* ======== PREVIEW 4×4 ======== */
+function generatePreview(){
+  const im=document.getElementById('img-final'),
+        c=document.getElementById('tile-canvas'),
+        ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  for(let y=0;y<4;y++)for(let x=0;x<4;x++)
+    ctx.drawImage(im,x*512,y*512,512,512);
+  document.getElementById('dl-preview').href=c.toDataURL('image/png');
+  document.getElementById('preview-box').style.display='block';
+  document.getElementById('btn-gen-preview').style.display='none';
+}
+
+/* ======== LAZY THUMBS ======== */
+const lazy=new IntersectionObserver(e=>e.forEach(t=>{
+  if(t.isIntersecting){t.target.src=t.target.dataset.src;lazy.unobserve(t.target);}
+}));
+document.querySelectorAll('#thumbs-grid img').forEach(i=>lazy.observe(i));
+
+/* ======== OVERLAY NAV ======== */
+const thumbs=[...document.querySelectorAll('#thumbs-grid img')],
+      srcs=thumbs.map(t=>t.dataset.src);
+let cur=0,ov=document.getElementById('overlay-full'),
+    imOv=document.getElementById('overlay-img');
+function openOverlay(i){cur=+i||0;show();ov.classList.add('open');}
+function show(){imOv.src=srcs[cur];}
+function nav(d){cur=(cur+d+srcs.length)%srcs.length;show();}
+document.getElementById('prev-btn').onclick=e=>{e.stopPropagation();nav(-1);};
+document.getElementById('next-btn').onclick=e=>{e.stopPropagation();nav(1);};
+ov.onclick=()=>ov.classList.remove('open');
+document.addEventListener('keydown',e=>{
+  if(!ov.classList.contains('open'))return;
+  if(e.key==='ArrowLeft')nav(-1);
+  if(e.key==='ArrowRight')nav(1);
+  if(e.key==='Escape')ov.classList.remove('open');
+});
+</script>
+
 </body>
 </html>

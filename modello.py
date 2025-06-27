@@ -12,12 +12,12 @@ import json
 # 1. Carrega categorias e tags
 # =============================================================================
 def carica_categorie():
-    if not os.path.exists('categorie.json'):
+    if not os.path.exists('static/categorie.json'):
         # Cria um arquivo JSON vazio se não existir
-        with open('categorie.json', 'w') as f:
+        with open('static/categorie.json', 'w') as f:
             json.dump({}, f, ensure_ascii=False, indent=4)
         return {}
-    with open('categorie.json', 'r') as f:
+    with open('static/categorie.json', 'r') as f:
         try:
             return json.load(f)
         except json.JSONDecodeError:

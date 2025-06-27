@@ -11,7 +11,14 @@
     <!-- Ícone -->
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
 </head>
+<script>
+window.addEventListener('load', ()=>{
+    const lo = document.getElementById('loading-overlay');
+    if (lo) lo.style.display = 'none';
+});
+</script>
 <body>
+
     <!-- HEADER -->
     <header>
         <div class="container">
@@ -22,10 +29,12 @@
             <nav>
                 <ul>
                     <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
+                    <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
+                    <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
                     <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
-                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
                     <li><a href="{{ url_for('about') }}">About</a></li>
-                    <li><a href="{{ url_for('logout') }}" style="color:red;">Logout</a></li>
+                    <li><a href="{{ url_for('logout') }}" style="color:red;">Uscire</a></li>
                 </ul>
             </nav>
         </div>
@@ -45,15 +54,13 @@
                     <a href="{{ url_for('view_logs') }}" class="button-blue">Logs</a>
                     <a href="{{ url_for('gestione_utenti') }}" class="button-blue">Gestione Utenti</a>
 
-                    <!-- Você pode adicionar um link direto para a nova página de indexação se desejar -->
+                    <!-- Indicizzazione -->
                     <a href="{{ url_for('indicizzazione') }}" class="button-blue">Indicizzazione Immagini</a>
                     <a href="{{ url_for('configurazione_generativa') }}" class="button-blue">Configurazione Generativa</a>
-
-
                 </nav>
             </aside>
 
-            <!-- Área principal de configurações -->
+            <!-- Área principal di configurazioni -->
             <section class="main-content-config">
                 <h1 class="page-title">Sezione Configurazioni</h1>
 
@@ -70,9 +77,7 @@
                     {% endif %}
                 {% endwith %}
 
-                <!-- Aqui você pode colocar qualquer conteúdo adicional ou formulários de configuração -->
-                <p>Benvenuto nella pagina di Configurazioni. Seleziona uma sezione no menu ao lado para configurar.</p>
-
+                <p>Benvenuto nella pagina di Configurazioni. Seleziona una sezione nel menu a lato per configurare.</p>
             </section>
         </div>
     </main>

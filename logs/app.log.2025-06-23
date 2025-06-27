@@ -1,0 +1,567 @@
+[2025-06-23 11:28:44,897] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 11:28:44,900] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 11:28:44,901] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 11:28:44,901] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 11:28:44,903] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 11:28:45,403] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 11:28:45,403] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 11:28:45,403] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 11:28:45,403] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 11:28:45,404] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 11:28:45,404] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 11:28:45,423] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 11:28:45,423] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 11:28:45,448] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 11:28:45,448] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 11:53:54,358] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 11:53:54,358] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 11:53:54,359] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 11:53:54,359] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 11:53:54,360] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 11:53:54,630] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 11:53:54,630] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 11:53:54,630] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 11:53:54,630] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 11:53:54,630] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 11:53:54,630] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 11:53:54,639] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 11:53:54,639] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 11:53:54,653] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 11:53:54,653] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 12:03:06,100] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 12:03:06,100] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 12:03:06,101] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 12:03:06,101] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 12:03:06,101] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 12:03:06,371] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 12:03:06,371] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 12:03:06,371] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 12:03:06,371] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 12:03:06,372] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 12:03:06,372] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 12:03:06,379] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 12:03:06,379] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 12:03:06,394] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 12:03:06,394] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 12:14:37,596] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 12:14:37,596] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 12:14:37,597] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 12:14:37,597] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 12:14:37,597] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 12:14:37,871] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 12:14:37,871] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 12:14:37,872] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 12:14:37,872] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 12:14:37,872] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 12:14:37,872] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 12:14:37,881] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 12:14:37,881] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 12:14:37,896] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 12:14:37,896] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 12:58:22,496] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 12:58:22,497] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 12:58:22,497] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 12:58:22,498] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 12:58:22,498] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 12:58:22,764] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 12:58:22,764] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 12:58:22,764] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 12:58:22,764] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 12:58:22,764] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 12:58:22,764] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 12:58:22,783] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 12:58:22,783] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 12:58:22,798] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 12:58:22,798] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 16:40:24,647] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 16:40:24,648] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 16:40:24,648] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 16:40:24,649] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 16:40:24,649] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 16:40:24,931] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 16:40:24,931] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 16:40:24,931] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 16:40:24,931] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 16:40:24,932] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 16:40:24,932] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 16:40:24,940] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 16:40:24,940] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 16:40:24,957] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 16:40:24,957] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 16:58:33,468] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 16:58:33,468] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 16:58:33,469] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 16:58:33,469] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 16:58:33,470] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 16:58:33,730] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 16:58:33,730] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 16:58:33,730] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 16:58:33,730] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 16:58:33,730] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 16:58:33,730] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 16:58:33,739] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 16:58:33,739] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 16:58:33,752] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 16:58:33,752] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:19:39,748] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 17:19:39,749] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 17:19:39,749] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 17:19:39,750] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 17:19:39,750] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 17:19:40,016] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:19:40,016] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:19:40,016] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:19:40,016] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:19:40,016] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:19:40,016] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:19:40,024] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:19:40,024] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:19:40,039] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:19:40,039] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:26:34,509] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 17:26:34,509] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 17:26:34,509] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 17:26:34,509] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 17:26:34,509] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 17:26:34,774] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:26:34,774] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:26:34,774] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:26:34,774] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:26:34,774] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:26:34,774] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:26:34,781] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:26:34,781] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:26:34,797] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:26:34,797] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:38:28,161] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 17:38:28,161] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 17:38:28,162] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 17:38:28,162] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 17:38:28,163] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 17:38:28,430] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:38:28,430] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:38:28,430] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:38:28,430] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:38:28,431] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:38:28,431] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:38:28,438] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:38:28,438] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:38:28,452] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:38:28,452] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:42:41,993] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 17:42:41,994] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 17:42:41,994] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 17:42:41,995] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 17:42:41,995] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 17:43:50,679] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 17:43:50,679] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 17:43:50,680] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 17:43:50,681] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 17:43:50,681] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 17:43:50,955] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:43:50,955] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:43:50,955] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:43:50,955] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:43:50,956] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:43:50,956] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:43:50,964] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:43:50,964] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:43:50,980] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:43:50,980] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:56:18,710] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 17:56:18,710] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 17:56:18,710] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 17:56:18,712] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 17:56:18,712] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 17:56:19,038] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:56:19,038] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:56:19,039] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:56:19,039] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:56:19,040] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:56:19,040] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:56:19,050] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:56:19,050] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:56:19,067] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:56:19,067] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:58:46,033] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 17:58:46,034] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 17:58:46,035] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 17:58:46,035] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 17:58:46,036] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 17:58:46,346] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:58:46,346] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 17:58:46,346] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:58:46,346] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 17:58:46,348] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:58:46,348] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 17:58:46,356] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:58:46,356] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 17:58:46,373] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 17:58:46,373] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 18:01:09,234] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 18:01:09,234] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 18:01:09,234] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 18:01:09,234] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 18:01:09,234] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 18:01:09,526] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 18:01:09,526] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 18:01:09,526] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 18:01:09,526] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 18:01:09,526] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 18:01:09,526] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 18:01:09,534] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 18:01:09,534] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 18:01:09,551] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 18:01:09,551] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 18:02:11,747] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:02:11,747] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:02:48,652] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:02:48,652] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:02:53,489] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:02:53,489] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:03:00,107] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:03:00,107] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:08:04,362] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 18:08:04,363] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 18:08:04,363] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 18:08:04,364] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 18:08:04,364] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 18:08:04,639] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 18:08:04,639] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 18:08:04,640] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 18:08:04,640] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 18:08:04,640] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 18:08:04,640] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 18:08:04,649] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 18:08:04,649] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 18:08:04,663] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 18:08:04,663] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 18:08:42,305] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:08:42,305] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:09:01,189] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:09:01,189] ERROR in app: Errore durante la ricerca: 'dict' object has no attribute 'lower'
+[2025-06-23 18:16:31,507] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 18:16:31,508] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 18:16:31,509] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 18:16:31,509] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 18:16:31,510] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 18:16:31,801] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 18:16:31,801] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 18:16:31,801] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 18:16:31,801] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 18:16:31,802] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 18:16:31,802] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 18:16:31,809] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 18:16:31,809] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 18:16:31,824] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 18:16:31,824] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 19:04:00,081] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 19:04:00,082] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 19:04:00,082] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 19:04:00,218] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 19:04:00,219] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 19:04:01,160] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 19:04:01,160] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 19:04:01,161] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 19:04:01,161] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 19:04:01,161] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 19:04:01,161] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 19:04:01,195] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 19:04:01,195] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 19:04:01,241] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 19:04:01,241] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 19:15:20,718] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 19:15:20,718] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 19:15:20,718] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 19:15:20,718] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 19:15:20,718] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 19:15:21,102] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 19:15:21,102] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 19:15:21,102] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 19:15:21,102] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 19:15:21,102] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 19:15:21,102] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 19:15:21,106] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 19:15:21,106] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 19:15:21,132] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 19:15:21,132] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 19:31:30,776] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 19:31:30,777] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 19:31:30,777] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 19:31:30,778] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 19:31:30,778] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 19:31:31,197] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 19:31:31,197] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 19:31:31,197] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 19:31:31,197] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 19:31:31,197] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 19:31:31,197] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 19:31:31,205] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 19:31:31,205] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 19:31:31,219] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 19:31:31,219] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 19:35:20,177] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 19:35:20,178] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 19:35:20,178] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 19:35:20,179] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 19:35:20,179] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 19:35:20,502] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 19:35:20,502] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 19:35:20,502] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 19:35:20,502] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 19:35:20,503] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 19:35:20,503] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 19:35:20,512] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 19:35:20,512] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 19:35:20,528] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 19:35:20,528] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 19:52:05,819] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 19:52:05,820] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 19:52:05,820] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 19:52:05,821] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 19:52:05,822] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 19:54:51,643] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 19:54:51,644] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 19:54:51,645] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 19:54:51,645] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 19:54:51,645] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 19:55:44,553] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 19:55:44,553] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 19:55:44,554] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 19:55:44,554] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 19:55:44,554] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 19:55:44,861] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 19:55:44,861] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 19:55:44,861] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 19:55:44,861] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 19:55:44,861] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 19:55:44,861] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 19:55:44,871] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 19:55:44,871] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 19:55:44,887] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 19:55:44,887] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 20:02:44,613] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 20:02:44,613] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 20:02:44,614] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 20:02:44,614] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 20:02:44,614] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 20:02:44,931] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 20:02:44,931] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 20:02:44,931] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 20:02:44,931] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 20:02:44,932] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 20:02:44,932] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 20:02:44,940] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 20:02:44,940] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 20:02:44,955] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 20:02:44,955] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 21:30:45,218] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 21:30:45,219] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 21:30:45,219] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 21:30:45,219] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 21:30:45,220] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 21:30:45,514] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 21:30:45,514] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 21:30:45,514] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 21:30:45,514] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 21:30:45,515] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 21:30:45,515] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 21:30:45,524] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 21:30:45,524] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 21:30:45,541] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 21:30:45,541] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 21:33:13,382] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 21:33:13,382] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 21:33:13,382] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 21:33:13,387] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 21:33:13,387] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 21:33:13,685] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 21:33:13,685] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 21:33:13,685] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 21:33:13,685] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 21:33:13,685] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 21:33:13,685] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 21:33:13,696] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 21:33:13,696] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 21:33:13,712] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 21:33:13,712] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:05:36,410] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 22:05:36,411] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 22:05:36,412] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 22:05:36,412] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 22:05:36,412] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 22:05:36,816] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:05:36,816] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:05:36,816] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:05:36,816] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:05:36,816] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:05:36,816] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:05:36,837] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:05:36,837] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:05:36,859] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:05:36,859] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:19:07,003] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 22:19:07,004] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 22:19:07,004] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 22:19:07,005] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 22:19:07,005] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 22:19:07,404] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:19:07,404] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:19:07,404] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:19:07,404] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:19:07,404] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:19:07,404] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:19:07,414] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:19:07,414] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:19:07,434] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:19:07,434] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:28:21,546] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 22:28:21,546] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 22:28:21,546] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 22:28:21,546] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 22:28:21,546] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 22:28:21,862] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:28:21,862] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:28:21,862] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:28:21,862] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:28:21,862] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:28:21,862] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:28:21,877] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:28:21,877] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:28:21,892] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:28:21,892] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:37:22,685] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 22:37:22,685] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 22:37:22,685] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 22:37:22,685] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 22:37:22,685] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 22:37:22,982] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:37:22,982] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:37:22,982] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:37:22,982] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:37:22,982] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:37:22,982] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:37:22,989] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:37:22,989] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:37:23,005] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:37:23,005] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:46:02,175] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 22:46:02,176] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 22:46:02,176] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 22:46:02,177] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 22:46:02,177] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 22:46:02,563] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:46:02,563] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:46:02,563] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:46:02,563] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:46:02,565] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:46:02,565] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:46:02,579] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:46:02,579] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:46:02,594] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:46:02,594] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:53:33,150] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 22:53:33,151] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 22:53:33,151] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 22:53:33,152] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 22:53:33,152] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 22:53:33,453] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:53:33,453] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:53:33,453] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:53:33,453] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:53:33,454] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:53:33,454] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:53:33,462] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:53:33,462] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:53:33,478] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:53:33,478] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:57:00,800] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 22:57:00,801] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 22:57:00,803] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 22:57:00,803] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 22:57:00,804] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 22:57:01,159] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:57:01,159] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 22:57:01,160] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:57:01,160] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 22:57:01,160] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:57:01,160] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 22:57:01,168] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:57:01,168] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 22:57:01,183] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 22:57:01,183] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 23:02:07,406] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 23:02:07,407] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 23:02:07,407] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 23:02:07,407] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 23:02:07,408] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 23:02:07,720] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 23:02:07,720] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 23:02:07,720] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 23:02:07,720] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 23:02:07,721] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 23:02:07,721] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 23:02:07,728] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 23:02:07,728] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 23:02:07,743] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 23:02:07,743] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 23:11:52,659] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 23:11:52,660] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 23:11:52,661] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 23:11:52,661] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 23:11:52,662] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 23:11:53,090] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 23:11:53,090] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 23:11:53,091] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 23:11:53,091] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 23:11:53,091] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 23:11:53,091] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 23:11:53,114] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 23:11:53,114] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 23:11:53,150] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 23:11:53,150] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 23:22:26,590] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 23:22:26,590] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 23:22:26,591] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 23:22:26,591] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 23:22:26,591] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 23:22:26,882] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 23:22:26,882] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 23:22:26,882] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 23:22:26,882] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 23:22:26,882] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 23:22:26,882] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 23:22:26,891] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 23:22:26,891] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 23:22:26,906] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 23:22:26,906] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 23:25:53,956] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 23:25:53,957] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 23:25:53,957] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 23:25:53,957] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 23:25:53,958] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 23:25:54,248] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 23:25:54,248] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 23:25:54,248] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 23:25:54,248] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 23:25:54,248] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 23:25:54,248] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 23:25:54,257] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 23:25:54,257] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 23:25:54,271] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 23:25:54,271] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 23:31:12,508] DEBUG in app: Alias geracao → /geracao
+[2025-06-23 23:31:12,508] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-23 23:31:12,509] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-23 23:31:12,510] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-23 23:31:12,510] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-23 23:31:12,800] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 23:31:12,800] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-23 23:31:12,800] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 23:31:12,800] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-23 23:31:12,801] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 23:31:12,801] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-23 23:31:12,810] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 23:31:12,810] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-23 23:31:12,827] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-23 23:31:12,827] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...

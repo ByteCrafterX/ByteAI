@@ -1,0 +1,35 @@
+[2025-06-12 17:18:14,426] DEBUG in app: Alias geracao → /geracao
+[2025-06-12 17:18:14,428] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-12 17:18:14,429] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-12 17:18:14,429] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-12 17:18:14,430] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-12 17:18:14,928] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-12 17:18:14,928] DEBUG in app: [DEBUG] Chamando start_scheduler() p/ APScheduler.
+[2025-06-12 17:18:14,928] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-12 17:18:14,928] DEBUG in app: start_scheduler() -> Carregando pianificazione...
+[2025-06-12 17:18:14,929] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-12 17:18:14,929] DEBUG in app: Programando reindex com day_of_week=sat,sun, hour=22, minute=21
+[2025-06-12 17:18:14,951] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-12 17:18:14,951] DEBUG in app: APScheduler iniciado. Jobs atuais: [<Job (id=reindex_agendado name=job_reindicizza_programmata)>]
+[2025-06-12 17:18:14,979] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-12 17:18:14,979] DEBUG in app: [DEBUG] Subindo waitress server na porta 5000...
+[2025-06-12 17:36:38,915] DEBUG in app: Alias geracao → /geracao
+[2025-06-12 17:36:38,916] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-12 17:36:38,916] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-12 17:36:38,917] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-12 17:36:38,917] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-12 17:36:38,997] DEBUG in app: Alias geracao → /geracao
+[2025-06-12 17:36:38,997] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-12 17:36:38,998] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-12 17:36:38,998] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-12 17:36:38,999] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-12 17:36:39,184] DEBUG in app: Alias geracao → /geracao
+[2025-06-12 17:36:39,185] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-12 17:36:39,186] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-12 17:36:39,186] DEBUG in app: Alias geracao → /geracao
+[2025-06-12 17:36:39,187] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-12 17:36:39,187] DEBUG in app: Alias stato_generazione → /stato_generazione
+[2025-06-12 17:36:39,187] DEBUG in app: Alias stato_lora → /stato_lora
+[2025-06-12 17:36:39,187] DEBUG in app: Alias configurazione_generativa → /configurazione_generativa
+[2025-06-12 17:36:39,188] DEBUG in app: Alias treino_lora → /treino_lora
+[2025-06-12 17:36:39,188] DEBUG in app: Alias stato_lora → /stato_lora

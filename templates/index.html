@@ -1,39 +1,40 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <title>Studio Elle - Ricerca Immagini</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+  <meta charset="UTF-8">
+  <title>Studio Elle – Ricerca Immagini</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
 </head>
 <body class="homepage">
 
-    <!-- Cabeçalho com menu -->
-    <header>
-        <div class="container">
-            <a href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
-                <span class="brand-name">Studio Elle Ricerca Immagini</span>
-            </a>
+<header>
+  <div class="container">
+    <a href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
+      <span class="brand-name">Studio Elle Ricerca Immagini</span>
+    </a>
 
-            <nav>
-                <ul>
-                    {% if session.logged_in %}
-                        <li><a href="{{ url_for('index') }}">Home</a></li>
-                        <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
-                        <li><a href="{{ url_for('geracao') }}">IA GENERATIVA</a></li>
-                        <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
-                        <li><a href="{{ url_for('about') }}">About</a></li>
-                        <li><a href="{{ url_for('logout') }}" style="color:red;">Logout</a></li>
-                    {% else %}
-                        <li><a href="#">Home</a></li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
-    </header>
+    <nav>
+      <ul>
+        {% if session.logged_in %}
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
+          <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
+          <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
+          <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+          <li><a href="{{ url_for('about') }}">About</a></li>
+          <li><a href="{{ url_for('logout') }}" style="color:red;">Uscire</a></li>
+        {% else %}
+          <li><a href="#">Home</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</header>
+
 
     <!-- Mensagens de feedback -->
     <div class="messages">
@@ -56,7 +57,7 @@
                 <!-- Campo de pesquisa de texto -->
                 <input type="text" name="input_testo" placeholder="Inserisci una descrizione...">
 
-                <!-- Seleção de categoria (opcional) -->
+                <!-- Seleção de categoria (opzionale) -->
                 <select name="categoria" id="categoria-select" onchange="caricaTags()">
                     <option value="">-- Seleziona una categoria (opzionale) --</option>
                     {% for nome_categoria in categorie %}
@@ -64,35 +65,18 @@
                     {% endfor %}
                 </select>
 
-                <!-- Input p/ imagem (oculto) -->
-                <input
-                  type="file"
-                  name="image_file"
-                  id="image-input"
-                  accept="image/*"
-                  capture="camera"
-                  style="display: none;"
-                  onchange="exibirNomeImagem()"
-                >
+                <!-- Input p/ immagine -->
+                <input type="file" name="image_file" id="image-input" accept="image/*" capture="camera" style="display:none;" onchange="exibirNomeImagem()">
 
-                <!-- Botão p/ abrir camera ou arquivo -->
-                <button
-                  type="button"
-                  class="search-button"
-                  style="margin: 15px 0; padding: 10px 15px; font-size: 14px;"
-                  onclick="document.getElementById('image-input').click();"
-                >
-                  Seleziona Immagine
+                <button type="button" class="search-button" style="margin:15px 0;padding:10px 15px;font-size:14px;" onclick="document.getElementById('image-input').click();">
+                    Seleziona Immagine
                 </button>
 
-                <!-- Texto para exibir nome do arquivo escolhido -->
-                <p id="image-selected-message"
-                   style="display: none; margin: 5px 0; color: #555; font-style: italic; font-size: 0.9rem;"
-                >
-                  Immagine selezionata: <span id="image-name"></span>
+                <p id="image-selected-message" style="display:none;margin:5px 0;color:#555;font-style:italic;font-size:0.9rem;">
+                    Immagine selezionata: <span id="image-name"></span>
                 </p>
 
-                <!-- Seleção de diretórios (checkbox) -->
+                <!-- Diretórios -->
                 <label class="directory-label">Seleziona le directory per la ricerca:</label>
                 <div class="directories-selection">
                     {% for d in directories_indicizzate %}
@@ -101,38 +85,32 @@
                         {% if nome %}
                             {% set display_label = nome %}
                         {% else %}
-                            {# Fallback: mostrar somente a última parte do path #}
                             {% set short_dir = path.split('/')[-1] if '/' in path else path %}
                             {% set display_label = short_dir %}
                         {% endif %}
                         <div>
                             <input type="checkbox" name="directories_selezionate" value="{{ path }}" id="dir{{ loop.index }}">
-                            <label for="dir{{ loop.index }}" title="{{ path }}"> {{ display_label }} </label>
+                            <label for="dir{{ loop.index }}" title="{{ path }}">{{ display_label }}</label>
                         </div>
                     {% endfor %}
                 </div>
 
-                <!-- Campo hidden p/ tags selecionadas via JS -->
+                <!-- Hidden com tags -->
                 <input type="hidden" name="tags_selezionate" id="tags-selezionate-input">
 
-                <!-- Botão de pesquisa -->
-                <button type="submit" class="search-button" style="margin-top: 15px;">
-                  Cerca Immagini
-                </button>
+                <button type="submit" class="search-button" style="margin-top:15px;">Cerca Immagini</button>
             </form>
         </div>
 
-        <!-- Div p/ exibir as tags -->
+        <!-- Tags -->
         <div class="tags-container" id="tags-container">
             <h3>Tag della Categoria</h3>
             <button id="select-all-tags">Seleziona Tutto</button>
-            <div id="tags-list">
-                <!-- As tags serão inseridas aqui dinamicamente -->
-            </div>
+            <div id="tags-list"></div>
         </div>
     </div>
     {% else %}
-    <!-- Overlay de login se não logado -->
+    <!-- Overlay de login -->
     <div class="login-overlay">
         <div class="login-box-floating">
             <h2 style="text-align:center;">Effettua l'accesso</h2>
@@ -143,7 +121,7 @@
                 <label for="password">Password:</label>
                 <input type="password" name="password" id="password" required>
 
-                <button type="submit" class="search-button" style="width:100%; margin-top:10px;">Accedi</button>
+                <button type="submit" class="search-button" style="width:100%;margin-top:10px;">Accedi</button>
             </form>
         </div>
     </div>
@@ -153,84 +131,57 @@
         <p>&copy; 2025 Powered by FuturaForma. Tutti i diritti riservati.</p>
     </footer>
 
-    <!-- Overlay de carregamento (spinner) -->
-    <div id="loading-overlay">
-      <div class="spinner"></div>
-    </div>
+    <!-- Overlay spinner -->
+    <div id="loading-overlay"><div class="spinner"></div></div>
 
+    <!-- ===== NOVO JS p/ categorias & tags ===== -->
     <script>
-      const categorie = {{ categorie|tojson }};
+    (() => {
+      /* elementos */
+      const selCat   = document.getElementById('categoria-select');
+      const listTags = document.getElementById('tags-list');
+      const hid      = document.getElementById('tags-selezionate-input');
+      const btnAll   = document.getElementById('select-all-tags');
+      const tagsBox  = document.getElementById('tags-container');
 
-      // Exibir nome do arquivo selecionado
-      function exibirNomeImagem() {
-          const fileInput = document.getElementById('image-input');
-          const msgElem = document.getElementById('image-selected-message');
-          const nameElem = document.getElementById('image-name');
-          if (fileInput.files.length > 0) {
-              nameElem.textContent = fileInput.files[0].name;
-              msgElem.style.display = 'block';
-          } else {
-              msgElem.style.display = 'none';
-          }
-      }
+      /* carrega categorie.json uma única vez */
+      let TAGS = {};
+      fetch('{{ url_for("static", filename="categorie.json") }}')
+           .then(r => r.json())
+           .then(j => TAGS = j);
 
-      // Carregar as tags ao selecionar a categoria
-      function caricaTags() {
-          const categoriaSelect = document.getElementById('categoria-select');
-          const selectedCategoria = categoriaSelect.value;
-          const tagsList = document.getElementById('tags-list');
-          const tagsContainer = document.querySelector('.tags-container');
-          tagsList.innerHTML = '';
-
-          if (selectedCategoria && categorie[selectedCategoria]) {
-              const tags = categorie[selectedCategoria]['tags'] || [];
-              tags.forEach(tag => {
-                  const tagElement = document.createElement('div');
-                  tagElement.classList.add('tag');
-                  tagElement.textContent = tag;
-                  tagElement.onclick = () => {
-                      tagElement.classList.toggle('selected');
-                  };
-                  tagsList.appendChild(tagElement);
-              });
-              tagsContainer.classList.add('active');
-          } else {
-              tagsContainer.classList.remove('active');
-          }
-      }
-
-      // Botão "Seleziona Tutto"
-      const selAllBtn = document.getElementById('select-all-tags');
-      if(selAllBtn){
-        selAllBtn.addEventListener('click', function() {
-            const allTags = document.querySelectorAll('#tags-list .tag');
-            const allSelected = Array.from(allTags).every(tag => tag.classList.contains('selected'));
-            allTags.forEach(tag => {
-                if (allSelected) {
-                    tag.classList.remove('selected');
-                } else {
-                    tag.classList.add('selected');
-                }
-            });
+      /* popula tags quando categoria muda */
+      window.caricaTags = () => {
+        const cat = selCat.value.trim();
+        listTags.innerHTML = '';
+        hid.value = '';
+        if (!cat || !TAGS[cat]) {
+          tagsBox.classList.remove('active');
+          return;
+        }
+        TAGS[cat].tags.forEach(t => {
+          const span = document.createElement('span');
+          span.className = 'tag';
+          span.textContent = t;
+          span.onclick = () => span.classList.toggle('selected');
+          listTags.appendChild(span);
         });
-      }
+        tagsBox.classList.add('active');
+      };
 
-      // Valida se pelo menos 1 diretório foi selecionado e exibe spinner
-      function validateAndShowSpinner() {
-          const directories = document.querySelectorAll('input[name="directories_selezionate"]:checked');
-          if (directories.length === 0) {
-              alert('Per favore, seleziona almeno una directory per la ricerca.');
-              return false;
-          }
-          // Inclui as tags selecionadas no input hidden
-          const selectedTags = Array.from(document.querySelectorAll('#tags-list .tag.selected'))
-              .map(tag => tag.textContent);
-          document.getElementById('tags-selezionate-input').value = selectedTags.join(',');
+      /* botão “seleciona tudo / limpa tudo” */
+      btnAll.onclick = () => {
+        const tags = [...listTags.querySelectorAll('.tag')];
+        const marcar = tags.some(t => !t.classList.contains('selected'));
+        tags.forEach(t => t.classList.toggle('selected', marcar));
+      };
 
-          // Exibe o overlay de carregamento
-          document.getElementById('loading-overlay').style.display = 'flex';
-          return true;
-      }
+      /* antes de enviar o formulário, grava as tags escolhidas */
+      document.getElementById('search-form').addEventListener('submit', () => {
+        const sel = [...listTags.querySelectorAll('.tag.selected')].map(t => t.textContent);
+        hid.value = sel.join(',');
+      });
+    })();
     </script>
 </body>
 </html>

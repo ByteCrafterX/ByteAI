@@ -1,119 +1,149 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <title>Studio Elle - Conversor di Immagini<</title>
-    <!-- Meta tag para responsividade -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Link para o arquivo CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Importação da fonte Orbitron -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+  <meta charset="UTF-8">
+  <title>Studio Elle – Conversione Immagini</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
 </head>
-<body>
-    <header>
-        <div class="container">
-            <a href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
-                <span class="brand-name">Studio Elle Ricerca Immagini</span>
-            </a>
+<script>
+window.addEventListener('load', ()=>{
+    const lo = document.getElementById('loading-overlay');
+    if (lo) lo.style.display = 'none';
+});
+</script>
+<body class="conversione-page">
+<header>
+  <div class="container header-container">
+    <a href="{{ url_for('index') }}" class="header-brand">
+      <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
+      <span class="brand-name"> Conversione Immagini (BETA)</span>
+    </a>
 
-            <nav>
-                <ul>
-                    <li><a href="{{ url_for('index') }}">Home</a></li>
-                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
-                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
-                    <li><a href="{{ url_for('about') }}">About</a></li>
-                </ul>
-            </nav>
+    <nav>
+      <ul class="nav-list">
+        {% if session.logged_in %}
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
+          <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
+          <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
+          <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+          <li><a href="{{ url_for('about') }}">About</a></li>
+          <li><a href="{{ url_for('logout') }}" class="logout-link" style="color:red;">Uscire</a></li>
+        {% else %}
+          <li><a href="#">Home</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</header>
 
-        </div>
-    </header>
+{% if session.logged_in %}
+<div class="conversion-container">
+    <div class="conversion-box" style="max-width:600px; margin:40px auto; padding:20px;">
 
-    <div class="container">
-        <h1>Conversor di Immagini</h1>
-        <p>Specifica la cartella di input e di output, poi avvia la conversione.<br>
-           Durante il processo, potrai seguire il progresso e il log in tempo reale.</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for cat, msg in messages %}
+              <div class="alert {{ cat }}">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
 
-        <!-- Mensagens Flask -->
-        <div class="messages">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <p class="{{ category }}">{{ message }}</p>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-        </div>
+        <form action="{{ url_for('conversor') }}" method="post" enctype="multipart/form-data" id="conversion-form" onsubmit="return avviaConversione()">
+            <h1 class="form-title">Converti Immagini</h1>
 
-        <!-- Formulário para escolher diretórios de entrada/saída -->
-        <form action="{{ url_for('inicia_conversao') }}" method="POST" style="margin-bottom: 30px;">
-            <label for="input_dir"><strong>Cartella di Input:</strong></label>
-            <input type="text" id="input_dir" name="input_dir" placeholder="/share/Condivisa/TEST" required>
+            <div class="form-group">
+                <label for="percorso-input">Percorso Directory</label>
+                <input type="text" id="percorso-input" name="percorso_input" class="input-text" placeholder="/path/to/directory" required>
+            </div>
 
-            <label for="output_dir"><strong>Cartella di Output:</strong></label>
-            <input type="text" id="output_dir" name="output_dir" placeholder="/share/Condivisa/TEST" required>
+            <div class="form-row">
+                <div class="form-group half">
+                    <label for="width-input">Larghezza (px)</label>
+                    <input type="number" id="width-input" name="width" class="input-small" placeholder="(originale)">
+                </div>
+                <div class="form-group half">
+                    <label for="height-input">Altezza (px)</label>
+                    <input type="number" id="height-input" name="height" class="input-small" placeholder="(originale)">
+                </div>
+            </div>
 
-            <button type="submit" class="button-blue" style="margin-top: 20px;">Converti</button>
+            <div class="form-row">
+                <div class="form-group half">
+                    <label for="icc-profile">Profilo colore ICC</label>
+                    <input type="file" id="icc-profile" name="icc_profile" accept=".icc">
+                </div>
+                <div class="form-group half">
+                    <label for="workers-input">Workers (processi)</label>
+                    <input type="number" id="workers-input" name="workers" class="input-small"
+                           value="{{ cpu_count }}" min="1" max="{{ cpu_count * 2 }}">
+                </div>
+            </div>
+
+            <!-- Pianificazione rimossa dalla UI: la logica resta nel backend -->
+            <button type="submit" class="convert-button">Avvia Conversione</button>
         </form>
 
-        <!-- Barra de progresso -->
-        <div id="progress-container" style="display: none;">
-            <h2>Avanzamento</h2>
-            <div id="progress-bar" style="width: 100%; background-color: #e0e0e0; border-radius: 4px; height: 20px; position: relative; overflow: hidden;">
-                <div id="progress-bar-fill" style="height: 100%; background-color: #4A90E2; width: 0; transition: width 0.3s ease;"></div>
+        <div class="progress-section" style="margin-top:20px;">
+            <label>Progresso:</label>
+            <progress id="progress-bar" value="{{ progress or 0 }}" max="100" style="width:100%;"></progress>
+        </div>
+
+        <div class="log-box" style="height:200px; overflow-y:auto; margin-top:20px; padding:10px; background:#f9f9f9;">
+            <h3>Log di Conversione</h3>
+            <div id="log-content">
+                {% for msg in logs or [] %}
+                    <p>{{ msg }}</p>
+                {% endfor %}
             </div>
-            <div id="progress-percentage" style="text-align: center; margin-top: 10px; font-weight: bold;">0%</div>
         </div>
 
-        <!-- Caixa de log -->
-        <div id="log-box" style="margin-top: 20px; display: none; border: 1px solid #ccc; padding: 10px; max-height: 300px; overflow-y: auto; font-family: monospace; background-color: #f9f9f9;">
-        </div>
     </div>
+</div>
+{% else %}
+<div class="login-overlay">
+    <div class="login-box-floating">
+        <h2>Effettua l'accesso</h2>
+        <form action="{{ url_for('fazer_login') }}" method="post">
+            <div class="form-group">
+                <label for="username">Nome Utente:</label>
+                <input type="text" name="username" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" name="password" id="password" required>
+            </div>
+            <button type="submit" class="convert-button">Accedi</button>
+        </form>
+    </div>
+</div>
+{% endif %}
 
-    <script>
+<footer class="footer">
+    <p>&copy; 2025 Powered by FuturaForma. Tutti i diritti riservati.</p>
+</footer>
 
-
-    // Vamos fazer polling a cada 2 segundos para /stato_conversao
-    let pollingInterval = null;
-
-    function fetchConversionStatus() {
-        fetch("{{ url_for('stato_conversao') }}")
-            .then(response => response.json())
-            .then(data => {
-                // Se não tiver começado, data.total_files=0 etc.
-                if (data.total_files > 0) {
-                    document.getElementById('progress-container').style.display = 'block';
-                    document.getElementById('log-box').style.display = 'block';
-                }
-
-                // Barra de progresso
-                let percent = data.percentuale;
-                document.getElementById('progress-bar-fill').style.width = percent + '%';
-                document.getElementById('progress-percentage').innerText = percent + '%';
-
-                // Log
-                let logHTML = '';
-                data.log.forEach(line => {
-                    // Escapar HTML simples
-                    logHTML += line + '<br>';
-                });
-                document.getElementById('log-box').innerHTML = logHTML;
-
-                // Se completed for true, paramos o polling
-                if (data.completed) {
-                    clearInterval(pollingInterval);
-                    pollingInterval = null;
-                }
-            })
-            .catch(err => console.error(err));
+<script>
+    function avviaConversione() {
+        document.querySelector('.convert-button').disabled = true;
+        appendLog('Inizio conversione…');
+        return true;
     }
 
-    // Inicia o polling quando a página carrega
-    window.onload = function() {
-        pollingInterval = setInterval(fetchConversionStatus, 2000);
-    };
-    </script>
+    function appendLog(msg) {
+        const logContent = document.getElementById('log-content');
+        const p = document.createElement('p');
+        p.textContent = msg;
+        logContent.appendChild(p);
+        logContent.scrollTop = logContent.scrollHeight;
+    }
+
+    function updateProgress(percent) {
+        document.getElementById('progress-bar').value = percent;
+    }
+</script>
 </body>
 </html>

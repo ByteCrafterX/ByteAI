@@ -1,9 +1,41 @@
-flask==2.3.2
-waitress==2.1.2
+# --- runtime core ---
+torch==2.2.2+cpu        ; platform_system=="Windows" \
+  --extra-index-url https://download.pytorch.org/whl/cpu
+torchvision==0.17.2+cpu ; platform_system=="Windows" \
+  --extra-index-url https://download.pytorch.org/whl/cpu
+numpy>=1.26,<1.27          # mesma faixa usada pelo torch-2.2
+Pillow>=11,<11.3
+scikit-image>=0.19.3,<0.22
 faiss-cpu==1.7.4
-torch==1.13.1
-transformers==4.19.2
-Pillow==10.0.0
-numpy==1.22.3
-APScheduler
+paddlepaddle==2.4.2
+paddleocr==2.6.1.3         # 1ª que já suporta PP-OCRv3 + paddle-2.4
+pytesseract==0.3.10
+opencv-python==4.6.0.66
+pyclipper==1.3.0.post6
+tqdm>=4.66
 
+# --- IA / geração ---
+transformers==4.39.3       # última 💚 com torch-2.2 (não usa get_default_device)
+diffusers==0.26.3
+accelerate==0.27.2
+safetensors>=0.4.2
+einops>=0.7.0
+
+# --- Flask app ---
+Flask==3.0.3
+waitress==3.0.0
+flask-babel==4.0.0
+apscheduler==3.10.4
+
+# --- utils / extra ---
+pyvips>=2.2.2              # opcional → cai pra Pillow se faltar
+imageio>=2.34
+psd-tools>=1.9
+fire==0.7
+attrdict==2.0.1
+lmdb==1.6.2
+shapely==2.1.1
+bce-python-sdk==0.9.35      # dep. transitiva do paddleocr
+python-Levenshtein==0.27.1
+beautifulsoup4==4.13.4
+PyMuPDF==1.20.2             # leitura PDF na rota conversor

@@ -1,240 +1,214 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <title>Configura Categorie e Tag</title>
-    <!-- Link para seu CSS principal (styles.css) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Risultati della Ricerca</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
 </head>
-<body>
-    <header>
-        <div class="container">
-            <a href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
-                <span class="brand-name">Studio Elle Ricerca Immagini</span>
-            </a>
+<script>
+window.addEventListener('load', ()=>{
+    const lo = document.getElementById('loading-overlay');
+    if (lo) lo.style.display = 'none';
+});
+</script>
+<body class="light">
+  <div id="loading-overlay" style="display:flex;"><div class="spinner"></div></div>
 
-            <nav>
-                <ul>
-                    <li><a href="{{ url_for('index') }}">Home</a></li>
-                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
-                    <li><a href="{{ url_for('utilidades') }}">Utilità</a></li>
-                    <li><a href="{{ url_for('about') }}">About</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
+  <header>
     <div class="container">
-        <h1>Configura Categorie e Tag</h1>
-        <p>Seleziona una categoria, modificala e premi <strong>Salva</strong> per aggiornare il tuo file di configurazione.</p>
+      <a href="{{ url_for('index') }}" class="logo-link">
+        <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
+        <span class="brand-name">Studio Elle Ricerca Immagini</span>
+      </a>
 
-        <!-- Form principal que envia o JSON final -->
-        <form id="categorie-form" action="{{ url_for('configura_categorie') }}" method="post">
-            <!-- Campo hidden para o JSON final -->
-            <input type="hidden" name="categorie_data" id="categorie_data_hidden">
+      <button id="menu-toggle" class="menu-toggle"><span></span><span></span><span></span></button>
 
-            <!-- Seletor de Categoria -->
-            <label for="select-categoria"><strong>Seleziona Categoria:</strong></label>
-            <select id="select-categoria">
-                <!-- As opções serão criadas dinamicamente no JavaScript -->
-            </select>
+      <nav id="main-nav">
+        <ul>
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
+          <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
+          <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
+          <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+          <li><a href="{{ url_for('about') }}">About</a></li>
+          <li><a href="{{ url_for('logout') }}" style="color:red;">Uscire</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
 
-            <!-- Botões de manipulação de categorias -->
-            <div style="margin-top:10px; display:flex; gap:10px;">
-                <button type="button" class="button-blue" id="add-category-btn">Aggiungi Categoria</button>
-                <button type="button" class="button-red" id="remove-category-btn">Rimuovi Categoria Selezionata</button>
-            </div>
+<div class="container">
+  <h1>Configura Categorie & Tag</h1>
+  <p>Seleziona un tipo, modifica e premi <strong>Salva</strong>.</p>
 
-            <!-- Área para exibir descrição da categoria -->
-            <div id="descrizione-container" style="margin-top:20px; display:none;">
-                <label for="descrizione-textarea"><strong>Descrizione della Categoria:</strong></label>
-                <textarea id="descrizione-textarea" rows="3"></textarea>
-            </div>
+  <!-- ========= FORM PRINCIPAL ========= -->
+  <form id="categorie-form"
+        action="{{ url_for('configura_categorie') }}"
+        method="post">
+    <input type="hidden" name="categorie_data" id="categorie_data_hidden">
+    <input type="hidden" name="tipo_config"  id="tipo_config_hidden">
 
-            <!-- Container de tags -->
-            <div class="tags-container" id="tags-box" style="margin-top:20px; display:none;">
-                <h3>Tag della Categoria</h3>
-                <!-- Botão de selecionar/deselecionar tudo -->
-                <button type="button" id="select-all-tags">Seleziona Tutto</button>
-                <!-- Lista de tags -->
-                <div id="tags-list" style="margin-top:10px;">
-                    <!-- As tags aparecem aqui dinamicamente -->
-                </div>
+    <!-- —— 1) TIPO DI CONFIG —— -->
+    <label for="tipo-select"><strong>Tipo di configurazione:</strong></label>
+    <select id="tipo-select">
+      <option value="ricerca">Per la Ricerca (categorie.json)</option>
+      <option value="generativa">Per la Generativa (categorie_generativa.json)</option>
+    </select>
 
-                <!-- Botão para remover tags selecionadas -->
-                <button type="button" class="button-red" id="remove-selected-tags" style="margin-top:10px;">
-                    Rimuovi Tag Selezionate
-                </button>
+    <!-- —— 2) SELETTORE CATEGORIA —— -->
+    <label style="margin-top:15px;" for="select-categoria"><strong>Seleziona Categoria:</strong></label>
+    <select id="select-categoria"></select>
 
-                <!-- Form para adicionar nova tag -->
-                <div class="add-tag-form" style="margin-top:10px;">
-                    <input type="text" id="new-tag-input" placeholder="Nuova Tag...">
-                    <button type="button" class="button-blue" id="add-tag-btn">Aggiungi Tag</button>
-                </div>
-            </div>
-
-            <!-- Botão principal para Salvar tudo -->
-            <button type="submit" class="button" style="margin-top:30px;">Salva</button>
-        </form>
+    <!-- BOTÕES DE CATEGORIA -->
+    <div style="margin:10px 0;display:flex;gap:10px;">
+      <button type="button" class="button-blue" id="add-category-btn">Aggiungi</button>
+      <button type="button" class="button-red"  id="remove-category-btn">Rimuovi</button>
     </div>
 
-    <!-- Script principal -->
-    <script>
-    // ========== 1) Obter string do Flask e parsear JSON ==========
-    let categorieRaw = `{{ categorie_data|safe }}`;
-    let categorieObj = {};
-    try {
-        categorieObj = JSON.parse(categorieRaw);
-    } catch(e) {
-        console.error("Errore di parsing JSON:", e);
-        categorieObj = {};
-    }
+    <!-- DESCRIZIONE -->
+    <div id="descrizione-container" style="display:none;">
+      <label for="descrizione-textarea"><strong>Descrizione:</strong></label>
+      <textarea id="descrizione-textarea" rows="3"></textarea>
+    </div>
 
-    // Referências
-    const selectCategoria = document.getElementById('select-categoria');
-    const descrizioneContainer = document.getElementById('descrizione-container');
-    const descrizioneTextarea = document.getElementById('descrizione-textarea');
-    const tagsBox = document.getElementById('tags-box');
-    const tagsList = document.getElementById('tags-list');
-    const removeSelectedTagsBtn = document.getElementById('remove-selected-tags');
-    const newTagInput = document.getElementById('new-tag-input');
+    <!-- TAGS -->
+    <div class="tags-container" id="tags-box" style="display:none;">
+      <h3>Tag della Categoria</h3>
+      <button type="button" id="select-all-tags">Seleziona Tutto</button>
+      <div id="tags-list" style="margin-top:10px;"></div>
 
-    let currentCategory = null;
+      <button type="button" class="button-red" id="remove-selected-tags"
+              style="margin-top:10px;">Rimuovi Selezionate</button>
 
-    // ========== 2) Popular <select> ==========
-    function populaSelect() {
-        selectCategoria.innerHTML = '';
-        const placeholderOption = document.createElement('option');
-        placeholderOption.value = '';
-        placeholderOption.textContent = '-- Seleziona --';
-        selectCategoria.appendChild(placeholderOption);
+      <div style="margin-top:10px;">
+        <input type="text" id="new-tag-input" placeholder="Nuova Tag…">
+        <button type="button" class="button-blue" id="add-tag-btn">Aggiungi</button>
+      </div>
+    </div>
 
-        Object.keys(categorieObj).forEach(catName => {
-            const option = document.createElement('option');
-            option.value = catName;
-            option.textContent = catName;
-            selectCategoria.appendChild(option);
-        });
-    }
+    <!-- SALVA -->
+    <button type="submit" class="button" style="margin-top:30px;">Salva</button>
+  </form>
+</div>
 
-    // ========== 3) Ao mudar a categoria selecionada ==========
-    selectCategoria.addEventListener('change', (e) => {
-        const catName = e.target.value;
-        if (!catName) {
-            currentCategory = null;
-            descrizioneContainer.style.display = 'none';
-            tagsBox.style.display = 'none';
-            return;
-        }
-        currentCategory = catName;
-        showCategoryData(catName);
-    });
+<!-- ========= JS ========== -->
+<script>
+/* ------- 0) JSON passati pelo Flask ------- */
+const dataSearch = JSON.parse(`{{ categorie_search|safe }}` || '{}');
+const dataGen   = JSON.parse(`{{ categorie_gen|safe }}`   || '{}');
 
-    // ========== 4) Exibir dados da categoria ==========
-    function showCategoryData(catName) {
-        descrizioneContainer.style.display = 'block';
-        tagsBox.style.display = 'block';
-        descrizioneTextarea.value = categorieObj[catName].descrizione || '';
-        renderTags(catName);
-    }
+/* ------- variáveis de estado ------- */
+let currentSet    = 'ricerca';   // 'ricerca' ou 'generativa'
+let activeObj     = dataSearch;  // referência ao objeto atual
+let currentCat    = null;
 
-    // ========== 5) Renderizar tags ==========
-    function renderTags(catName) {
-        tagsList.innerHTML = '';
-        const tagsArray = categorieObj[catName].tags || [];
+/* ------- referências DOM ------- */
+const tipoSel   = document.getElementById('tipo-select');
+const catSel    = document.getElementById('select-categoria');
+const descWrap  = document.getElementById('descrizione-container');
+const descTA    = document.getElementById('descrizione-textarea');
+const tagsBox   = document.getElementById('tags-box');
+const tagsList  = document.getElementById('tags-list');
 
-        tagsArray.forEach(tag => {
-            const tagEl = document.createElement('div');
-            tagEl.classList.add('tag');
-            tagEl.textContent = tag;
-            tagEl.onclick = () => {
-                tagEl.classList.toggle('selected');
-            };
-            tagsList.appendChild(tagEl);
-        });
-    }
+/* ========== FUNÇÕES AUX ========== */
+function populateCatSelect(){
+  catSel.innerHTML = '<option value="">-- Seleziona --</option>';
+  Object.keys(activeObj).forEach(name=>{
+    const opt=document.createElement('option');
+    opt.value=opt.textContent=name; catSel.appendChild(opt);
+  });
+}
 
-    // ========== 6) Seleziona Tutto / Deseleziona Tutto ==========
-    document.getElementById('select-all-tags').addEventListener('click', function() {
-        const allTagEls = tagsList.querySelectorAll('.tag');
-        if (allTagEls.length === 0) return;
-        const allSelected = Array.from(allTagEls).every(el => el.classList.contains('selected'));
-        if (allSelected) {
-            allTagEls.forEach(el => el.classList.remove('selected'));
-        } else {
-            allTagEls.forEach(el => el.classList.add('selected'));
-        }
-    });
+function renderTags(cat){
+  tagsList.innerHTML='';
+  (activeObj[cat]?.tags||[]).forEach(tag=>{
+    const el=document.createElement('div');
+    el.className='tag'; el.textContent=tag;
+    el.onclick=()=>el.classList.toggle('selected');
+    tagsList.appendChild(el);
+  });
+}
 
-    // ========== 7) Rimuovi Tag Selezionate ==========
-    removeSelectedTagsBtn.addEventListener('click', function() {
-        if (!currentCategory) return;
-        const tagEls = tagsList.querySelectorAll('.tag.selected');
-        if (tagEls.length === 0) return;
-        let tagsArray = categorieObj[currentCategory].tags;
-        const selectedTexts = Array.from(tagEls).map(el => el.textContent);
-        tagsArray = tagsArray.filter(tag => !selectedTexts.includes(tag));
-        categorieObj[currentCategory].tags = tagsArray;
-        renderTags(currentCategory);
-    });
+function loadCategory(cat){
+  if(!cat){ descWrap.style.display='none'; tagsBox.style.display='none'; return;}
+  descWrap.style.display='block';
+  tagsBox.style.display='block';
+  descTA.value=activeObj[cat].descrizione||'';
+  renderTags(cat);
+}
 
-    // ========== 8) Aggiungi Tag ==========
-    document.getElementById('add-tag-btn').addEventListener('click', function() {
-        if (!currentCategory) return;
-        const newTag = newTagInput.value.trim();
-        if (!newTag) return;
-        categorieObj[currentCategory].tags = categorieObj[currentCategory].tags || [];
-        categorieObj[currentCategory].tags.push(newTag);
-        newTagInput.value = '';
-        renderTags(currentCategory);
-    });
+/* ========== EVENTOS UI ========== */
+/* — troca tipo — */
+tipoSel.onchange=()=>{
+  currentSet = tipoSel.value;
+  activeObj  = currentSet==='ricerca' ? dataSearch : dataGen;
+  currentCat = null;
+  populateCatSelect();
+  loadCategory(null);
+};
 
-    // ========== 9) Aggiungi Categoria ==========
-    document.getElementById('add-category-btn').addEventListener('click', function() {
-        const catName = prompt('Nome della nuova categoria:');
-        if (!catName) return;
-        const newCatName = catName.trim();
-        if (!newCatName) return;
-        if (!categorieObj[newCatName]) {
-            categorieObj[newCatName] = {
-                descrizione: "",
-                tags: []
-            };
-        }
-        populaSelect();
-        selectCategoria.value = newCatName;
-        selectCategoria.dispatchEvent(new Event('change'));
-    });
+/* — troca categoria — */
+catSel.onchange=()=>{
+  currentCat = catSel.value||null;
+  loadCategory(currentCat);
+};
 
-    // ========== 10) Rimuovi Categoria Selezionada ==========
-    document.getElementById('remove-category-btn').addEventListener('click', function() {
-        if (!currentCategory) return;
-        if (!confirm('Sicuro di voler rimuovere la categoria "' + currentCategory + '"?')) return;
-        delete categorieObj[currentCategory];
-        currentCategory = null;
-        populaSelect();
-        descrizioneContainer.style.display = 'none';
-        tagsBox.style.display = 'none';
-    });
+/* — descrizione edit — */
+descTA.oninput=()=>{
+  if(currentCat) activeObj[currentCat].descrizione=descTA.value;
+};
 
-    // ========== 11) Ao digitar na descrizione ==========
-    descrizioneTextarea.addEventListener('input', function() {
-        if (currentCategory) {
-            categorieObj[currentCategory].descrizione = this.value;
-        }
-    });
+/* — add categoria — */
+document.getElementById('add-category-btn').onclick=()=>{
+  const nome=prompt('Nome nuova categoria:'); if(!nome) return;
+  if(!activeObj[nome]) activeObj[nome]={descrizione:'',tags:[]};
+  populateCatSelect(); catSel.value=nome; catSel.onchange();
+};
 
-    // ========== 12) Ao submeter o formulário (Salvar) ==========
-    document.getElementById('categorie-form').addEventListener('submit', function(e) {
-        const hiddenInput = document.getElementById('categorie_data_hidden');
-        hiddenInput.value = JSON.stringify(categorieObj);
-    });
+/* — rem categoria — */
+document.getElementById('remove-category-btn').onclick=()=>{
+  if(!currentCat) return;
+  if(!confirm('Rimuovere "'+currentCat+'"?')) return;
+  delete activeObj[currentCat]; currentCat=null;
+  populateCatSelect(); loadCategory(null);
+};
 
-    // Inicializa o select
-    populaSelect();
-    </script>
+/* — seleciona/limpa todas tags — */
+document.getElementById('select-all-tags').onclick=()=>{
+  const all=[...tagsList.querySelectorAll('.tag')];
+  if(!all.length) return;
+  const allSel=all.every(t=>t.classList.contains('selected'));
+  all.forEach(t=>t.classList.toggle('selected',!allSel));
+};
+
+/* — add tag — */
+document.getElementById('add-tag-btn').onclick=()=>{
+  if(!currentCat) return;
+  const v=document.getElementById('new-tag-input').value.trim(); if(!v) return;
+  activeObj[currentCat].tags.push(v); document.getElementById('new-tag-input').value='';
+  renderTags(currentCat);
+};
+
+/* — remove tags sel — */
+document.getElementById('remove-selected-tags').onclick=()=>{
+  if(!currentCat) return;
+  const sel=[...tagsList.querySelectorAll('.tag.selected')].map(t=>t.textContent);
+  activeObj[currentCat].tags=activeObj[currentCat].tags.filter(t=>!sel.includes(t));
+  renderTags(currentCat);
+};
+
+/* — submit — */
+document.getElementById('categorie-form').onsubmit=()=>{
+  document.getElementById('categorie_data_hidden').value =
+      JSON.stringify(activeObj);
+  document.getElementById('tipo_config_hidden').value = currentSet;
+};
+
+/* — init — */
+populateCatSelect();
+</script>
 </body>
 </html>
