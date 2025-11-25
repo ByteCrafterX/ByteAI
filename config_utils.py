@@ -44,3 +44,17 @@ def set_generative_dirs(d: dict):
 def get_directories_indicizzate():
     """Lista delle directory già indicizzate (come nel vecchio codice)."""
     return cfg_get("directories_indicizzate", [])
+def save_config(new_data: dict):
+    """Atualiza config.json preservando as outras chaves já existentes."""
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            current = json.load(f)
+    except Exception:
+        current = {}
+
+    # mescla incremental
+    for k, v in new_data.items():
+        current[k] = v
+
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(current, f, indent=4, ensure_ascii=False)

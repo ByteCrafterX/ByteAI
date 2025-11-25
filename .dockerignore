@@ -1,14 +1,72 @@
-# Ignorar arquivos de compilação Python
+# ==============================
+# ByteAI - Docker Ignore File
+# ==============================
+
+# --- Ambientes virtuais e caches Python ---
 __pycache__/
 *.pyc
 *.pyo
-
-# Ignorar pastas de ambiente virtual
+*.pyd
+.venv/
 venv/
 .env/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
 
-# Ignorar arquivos de configuração locais
+# --- Logs, backups, configs locais ---
 *.log
-*.env
 *.bak
+*.tmp
+*.swp
+*.lock
+*.pid
+*.env
+.DS_Store
+Thumbs.db
 
+# --- Diretórios e arquivos pesados que não precisam estar na imagem ---
+# (eles são montados via volume no runtime)
+embeddings_immagini.npy
+indice_faiss.index
+percorsi_immagini.pkl
+ocr_metadata.json
+config.json
+
+# --- Pastas de dados / índices / cache ---
+cache/
+data/
+datasets/
+models/
+weights/
+tmp/
+logs/
+__output__/
+__backup__/
+test/
+tests/
+
+# --- Itens específicos do projeto que só servem no host ---
+/Condivisa/
+static/originali/
+static/miniature/
+media/
+uploads/
+examples/
+docs/
+notebooks/
+
+# --- Controle de versão ---
+.git/
+.gitignore
+.idea/
+.vscode/
+*.tar
+*.zip
+
+# --- Arquivos de sistema ou editor ---
+*.sublime-project
+*.sublime-workspace
+*.iml
+*.bak
+*.old

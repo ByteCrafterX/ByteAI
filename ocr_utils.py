@@ -1,20 +1,27 @@
-"""
-ocr_utils.py  –  OCR para etiquetas usando *somente* PaddleOCR
-"""
+# ocr_utils.py  – OCR com PaddleOCR + utilidades de metadados
 from __future__ import annotations
 import os, json, logging, threading
 from pathlib import Path
+from functools import lru_cache
 
 import cv2
 import numpy as np
 from PIL import Image, ImageEnhance
-from paddleocr import PaddleOCR                  # ← única dependência de OCR
+from paddleocr import PaddleOCR
 
-# ─────────────── infra de metadados (mantida p/ app.py) ────────────────
 _META = "ocr_metadata.json"
 _lock = threading.Lock()
 
-def carrega_ocr_metadata() -> dict:
+# ─────────────── logger ────────────────────────────────────────────────
+log = logging.getLogger("ocr")
+if not log.handlers:
+    h = logging.StreamHandler()
+    h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s:ocr:%(message)s"))
+    log.addHandler(h)
+log.setLevel(logging.INFO)
+
+# ─────────────── JSON helpers ──────────────────────────────────────────
+def carrega_ocr_metadata() -> dict[str, str]:
     if os.path.isfile(_META):
         try:
             return json.load(open(_META, encoding="utf-8"))
@@ -29,16 +36,26 @@ def salva_ocr_metadata(d: dict):
     except Exception as e:
         log.warning("Erro ao gravar JSON: %s", e)
 
-# ─────────────── logger ────────────────────────────────────────────────
-log = logging.getLogger("ocr")
-if not log.handlers:
-    h = logging.StreamHandler()
-    h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s:ocr:%(message)s"))
-    log.addHandler(h)
-log.setLevel(logging.INFO)
+def prune_ocr_metadata(percorsi_immagini: list[str], meta_path: str = _META) -> None:
+    """
+    Mantém o JSON do OCR consistente com o que existe no índice/disco.
+    Chame ao final da indexação.
+    """
+    try:
+        meta = json.load(open(meta_path, encoding="utf-8"))
+    except Exception:
+        return
+    keep = set(os.path.normpath(p) for p in percorsi_immagini if os.path.exists(p))
+    changed = False
+    for k in list(meta.keys()):
+        if os.path.normpath(k) not in keep:
+            meta.pop(k, None)
+            changed = True
+    if changed:
+        json.dump(meta, open(meta_path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+        log.info("OCR metadata: %d entradas removidas (arquivos ausentes)", changed)
 
 # ─────────────── PaddleOCR singleton ───────────────────────────────────
-from functools import lru_cache
 @lru_cache(maxsize=1)
 def _get_paddle() -> PaddleOCR:
     log.info("Carregando PaddleOCR (CPU)…")
@@ -62,7 +79,7 @@ def _extrai_roi_etiqueta(img_bgr: np.ndarray) -> Image.Image:
     for c in cnts:
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.03 * peri, True)
-        if len(approx) != 4:                 # precisa ser retângulo
+        if len(approx) != 4:
             continue
         area = cv2.contourArea(approx)
         if area < 0.01 * w * h:
@@ -70,11 +87,12 @@ def _extrai_roi_etiqueta(img_bgr: np.ndarray) -> Image.Image:
         x, y, cw, ch = cv2.boundingRect(approx)
         ar = cw / float(ch)
         if 0.8 < ar < 4.0 and area > best_area:
-            if cv2.mean(gray, mask=cv2.drawContours(
-                np.zeros_like(gray), [approx], -1, 255, -1))[0] > 150:
+            mask = np.zeros_like(gray)
+            cv2.drawContours(mask, [approx], -1, 255, -1)
+            if cv2.mean(gray, mask=mask)[0] > 150:
                 best, best_area = approx, area
 
-    if best is None:                         # nada encontrado → usa tudo
+    if best is None:
         pil = Image.fromarray(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
     else:
         pts = best.reshape(4, 2).astype(np.float32)
@@ -90,9 +108,9 @@ def _extrai_roi_etiqueta(img_bgr: np.ndarray) -> Image.Image:
         warp = cv2.warpPerspective(img_bgr, M, (dst_w, dst_h))
         pil = Image.fromarray(cv2.cvtColor(warp, cv2.COLOR_BGR2RGB))
 
-    return ImageEnhance.Contrast(pil).enhance(1.8)   # leve boost contraste
+    return ImageEnhance.Contrast(pil).enhance(1.8)
 
-# ─────────────── função pública chamada pelo app ───────────────────────
+# ─────────────── pública: extrai e grava no JSON ───────────────────────
 def extrai_texto_e_indexa(path_img: str) -> str:
     abs_path = os.path.abspath(path_img)
     img_bgr = cv2.imread(abs_path)
@@ -102,8 +120,6 @@ def extrai_texto_e_indexa(path_img: str) -> str:
 
     pil_roi = _extrai_roi_etiqueta(img_bgr)
     ocr_res = _get_paddle().ocr(np.array(pil_roi), cls=True)
-
-    # Desempacota se veio embrulhado em lista extra
     if len(ocr_res) == 1 and isinstance(ocr_res[0], list):
         ocr_res = ocr_res[0]
 
@@ -115,12 +131,38 @@ def extrai_texto_e_indexa(path_img: str) -> str:
                 textos.append(txt)
 
     texto = " ".join(textos).strip()
-    log.info("PaddleOCR → %d chars", len(texto))
-
     with _lock:
         meta = carrega_ocr_metadata()
-        meta[abs_path] = texto
+        meta[abs_path] = texto       # sobrescreve/atualiza
         salva_ocr_metadata(meta)
 
-    log.info("%s – %d chars final", Path(abs_path).name, len(texto))
+    log.info("OCR %s – %d chars", Path(abs_path).name, len(texto))
     return texto
+
+# ─────────────── helpers p/ busca OCR textual ──────────────────────────
+def _norm_txt(s: str) -> str:
+    return " ".join((s or "").lower().split())
+
+def buscar_ocr_paths(termo: str,
+                     directories_selezionate: list[str] | None = None) -> list[str]:
+    """
+    Retorna caminhos cujo texto OCR contém o termo (normalizado).
+    Filtra por diretórios e existência no disco.
+    """
+    q = _norm_txt(termo)
+    if not q:
+        return []
+
+    meta = carrega_ocr_metadata()
+    out = []
+    for p, txt in meta.items():
+        if directories_selezionate:
+            ok_dir = any(os.path.normpath(p).startswith(os.path.normpath(d))
+                         for d in directories_selezionate)
+            if not ok_dir:
+                continue
+        if not os.path.exists(p):
+            continue
+        if q in _norm_txt(txt):
+            out.append(p)
+    return out

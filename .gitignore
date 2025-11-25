@@ -1,0 +1,25 @@
+# IDE
+.idea/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Arquivos gerados pelo ByteAI
+embeddings_immagini.npy
+indice_faiss.index
+percorsi_immagini.pkl
+info_immagini.json
+ocr_metadata.json
+search_stats.json
+
+# Logs
+logs/
+*.log
+
+# Config local
+config.json
+
+# Tars temporários
+*.tar
+.tmp-byteai.*

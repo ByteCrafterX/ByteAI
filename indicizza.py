@@ -1,4 +1,4 @@
-# indizza.py – indexação + OCR
+# indizza.py – indexação + OCR (na RAIZ) com limpeza de “fantasmas”
 import os, pickle, json, re
 import numpy as np
 import torch
@@ -7,7 +7,63 @@ from transformers import CLIPProcessor, CLIPModel
 import faiss
 
 from progress import indicizzazione_progress, progress_lock
-from ocr_utils import extrai_texto_e_indexa, carrega_ocr_metadata, salva_ocr_metadata
+from ocr_utils import extrai_texto_e_indexa  # extração; leitura/escrita do OCR faremos localmente (RAIZ)
+
+# ===== OCR na RAIZ =====
+OCR_META_PATH = "ocr_metadata.json"
+
+def _ocr_root_load() -> dict:
+    """Lê o JSON de OCR na RAIZ; cria vazio se não existir."""
+    if not os.path.exists(OCR_META_PATH):
+        try:
+            with open(OCR_META_PATH, "w", encoding="utf-8") as f:
+                json.dump({}, f, ensure_ascii=False, indent=2)
+        except Exception:
+            return {}
+        return {}
+    try:
+        with open(OCR_META_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _ocr_root_save(d: dict):
+    """Salva OCR na RAIZ de forma atômica."""
+    tmp = OCR_META_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(d, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, OCR_META_PATH)
+
+def _ocr_root_clean_orphans(directories_immagini: list[str]) -> int:
+    """
+    Remove do OCR:
+      - caminhos inexistentes em disco
+      - caminhos fora das diretivas ativas
+    Retorna a QTD removida.
+    """
+    meta = _ocr_root_load()
+    if not meta:
+        return 0
+
+    dirs_norm = [os.path.normpath(x) for x in (directories_immagini or [])]
+    def _in_active_dirs(pth: str) -> bool:
+        if not dirs_norm:
+            return True
+        p = os.path.normpath(pth)
+        return any(p.startswith(dn) for dn in dirs_norm)
+
+    removed = 0
+    for k in list(meta.keys()):
+        if (not os.path.exists(k)) or (not _in_active_dirs(k)):
+            meta.pop(k, None)
+            removed += 1
+    if removed:
+        _ocr_root_save(meta)
+    return removed
+
+
+from ocr_utils import extrai_texto_e_indexa, carrega_ocr_metadata, salva_ocr_metadata  # (compat: não usados aqui)
+from ocr_utils import extrai_texto_e_indexa as _unused__extrai_texto_e_indexa  # só p/ evitar linter reclamar
 
 
 def indicizza_immagini(directories_immagini, file_indice_faiss,
@@ -15,8 +71,8 @@ def indicizza_immagini(directories_immagini, file_indice_faiss,
     """
     Indexa incrementalmente:
       • embeddings CLIP (faiss)
-      • texto OCR (ocr_metadata.json)
-      • remove entradas órfãs
+      • texto OCR (ocr_metadata.json, na RAIZ)
+      • remove entradas órfãs (embeddings e OCR)
     """
 
     # ───── 0. modelo CLIP ─────
@@ -47,7 +103,7 @@ def indicizza_immagini(directories_immagini, file_indice_faiss,
         array_completo = np.vstack(embedding_immagini).astype("float32")
         novos_percursos, novos_embeddings, cont_removidos = [], [], 0
 
-        meta_ocr = carrega_ocr_metadata()
+        meta_ocr = _ocr_root_load()  # OCR na RAIZ
 
         for idx, caminho in enumerate(percorsi_immagini):
             if interrompi_evento.is_set():
@@ -57,22 +113,32 @@ def indicizza_immagini(directories_immagini, file_indice_faiss,
                 return
 
             if os.path.exists(caminho) and any(
-                caminho.startswith(d) for d in directories_immagini
+                os.path.normpath(caminho).startswith(os.path.normpath(d))
+                for d in directories_immagini
             ):
                 novos_percursos.append(caminho)
                 novos_embeddings.append(array_completo[idx])
             else:
                 cont_removidos += 1
-                meta_ocr.pop(caminho, None)
+                # remove também do OCR
+                if caminho in meta_ocr:
+                    meta_ocr.pop(caminho, None)
 
         percorsi_immagini  = novos_percursos
         embedding_immagini = [np.vstack(novos_embeddings)] if novos_embeddings else []
-        salva_ocr_metadata(meta_ocr)
+        _ocr_root_save(meta_ocr)  # persiste OCR limpo
 
         if cont_removidos:
             with progress_lock:
                 indicizzazione_progress["log"].append(
-                    f"[indicizza] Removidos {cont_removidos} caminhos obsoletos.")
+                    f"[indicizza] Removidos {cont_removidos} caminhos obsoletos (e OCR correspondente).")
+
+    # ───── 2.b limpeza complementar de OCR (independente) ─────
+    removed_ocr = _ocr_root_clean_orphans(directories_immagini)
+    if removed_ocr:
+        with progress_lock:
+            indicizzazione_progress["log"].append(
+                f"[indicizza] OCR: removidas {removed_ocr} entradas inválidas.")
 
     # ───── 3. novas imagens ─────
     imagens_da_indicizzare = []
@@ -123,9 +189,10 @@ def indicizza_immagini(directories_immagini, file_indice_faiss,
                     images_pil.append(im.copy())
                 percorsi_immagini.append(os.path.abspath(f_))
 
-                # --- OCR ---
-                extrai_texto_e_indexa(f_)
-                ocr_txt = carrega_ocr_metadata().get(f_, "")
+                # --- OCR (extrai e registra na RAIZ) ---
+                extrai_texto_e_indexa(f_)  # util salva no arquivo
+                meta = _ocr_root_load()
+                ocr_txt = meta.get(f_, "")
                 char_info = f"{len(ocr_txt.strip())} char" if ocr_txt.strip() else "nenhum texto"
                 with progress_lock:
                     indicizzazione_progress["log"].append(
@@ -175,6 +242,12 @@ def indicizza_immagini(directories_immagini, file_indice_faiss,
             np.save(f, final_array)
         with open(file_percorsi, "wb") as f:
             pickle.dump(percorsi_immagini, f)
+
+        # 🔹 mantém os diretórios no config.json sem apagar outras chaves
+        from config_utils import save_config
+        save_config({
+            "directories_indicizzate": directories_immagini
+        })
 
         with progress_lock:
             indicizzazione_progress["log"].append(

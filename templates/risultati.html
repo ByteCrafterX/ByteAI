@@ -12,14 +12,14 @@
 <script>addEventListener('load',()=>{const o=document.getElementById('loading-overlay');if(o)o.style.display='none';});</script>
 
 <style>
-/* ---------- BARRA RETRÁCTIL ------------------------------------------ */
+/* ---------- BARRA RETRÁCTIL (fica no topo enquanto rola) -------------- */
 .filt-wrap{position:sticky;top:70px;z-index:990;font-size:.9rem}
 .filt-toggle{background:#0067c5;color:#fff;border:none;border-radius:22px;
              padding:6px 20px;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.25);}
 .filt-panel{background:#f7fafe;border-radius:12px;margin-top:6px;
             box-shadow:0 2px 4px rgba(0,0,0,.15);overflow:hidden;
             max-height:0;opacity:0;transition:max-height .25s ease,opacity .25s ease;}
-.filt-panel.open{max-height:320px;opacity:1;}
+.filt-panel.open{max-height:360px;opacity:1;}
 .filt-row{display:flex;flex-wrap:wrap;gap:10px;padding:12px 16px;align-items:center}
 .filt-row select,.filt-row input[type=text]{padding:5px 6px;border:1px solid #8aa0c4;
       border-radius:6px;min-width:120px;font:inherit}
@@ -28,17 +28,38 @@
 .btn-blue:hover{filter:brightness(.93)}
 .filt-title{margin:6px 4px 2px;font-weight:600;color:#0067c5}
 
-/* ---------- TAGS & DIRECTORY PILLS ----------------------------------- */
-.pill,.tag{display:inline-block;padding:4px 11px;margin:3px 4px;border:1px solid #0067c5;
+/* ---------- TAGS, PILLS e CHIPS -------------------------------------- */
+.pill,.tag,.chip{display:inline-block;padding:4px 11px;margin:3px 4px;border:1px solid #0067c5;
            border-radius:14px;color:#0067c5;background:#e6efff;cursor:pointer;
            transition:.15s}
 .pill.selected,.tag.selected{background:#28a745;border-color:#28a745;color:#fff}
+.chip{background:#dce7f9;border-color:#0067c5;color:#003366;cursor:default}
+.chip .remove{margin-left:6px;color:#b00020;font-weight:bold;cursor:pointer}
 .hidden{display:none}
 
 /* ---------- RESPONSIVO ------------------------------------------------ */
 @media(max-width:620px){
  .filt-row select,.filt-row input[type=text]{min-width:100px}
  .btn-blue.apply{margin-left:0;width:100%}
+}
+
+/* ======== ADIÇÕES: rolagem interna + altura dinâmica do painel ======== */
+/* sem remover suas regras acima; apenas adiciona/override seguro */
+:root{
+  --filt-maxvh: 80vh; /* painel aberto pode ocupar até 80% da viewport */
+}
+/* quando houver muitas tags/diretórios, cada box rola sozinho */
+#tags-area, #dirs-area{padding:0 16px 10px;}
+#tags-box, #dirs-box{
+  display:flex; flex-wrap:wrap; gap:6px;
+  max-height:calc(var(--filt-maxvh) / 2);  /* metade para cada bloco, na média */
+  overflow:auto; padding-bottom:8px; scroll-behavior:smooth;
+}
+/* quando o painel abre, o JS ajusta o max-height inline;
+   esta regra apenas garante uma base agradável */
+.filt-panel.open{
+  /* manter a sua transição e permitir JS aumentar acima dos 360px se precisar */
+  transition:max-height .25s ease,opacity .25s ease;
 }
 </style>
 </head>
@@ -58,7 +79,7 @@
       <ul>
         <li><a href="{{ url_for('index') }}">Home</a></li>
         <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
-        <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
+        <li><a href="{{ url_for('conversor') }}">Convertitore</a></li>
         <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
         <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
         <li><a href="{{ url_for('about') }}">About</a></li>
@@ -87,6 +108,7 @@
       </select>
       <button id="dir-btn" class="pill" style="margin-left:0;">Directory…</button>
       <button id="apply-filters" class="btn-blue apply">Applica</button>
+      <button id="clear-filters" class="btn-blue" style="background:#b00020;">Pulisci</button>
     </div>
 
     <!-- TAGS -->
@@ -101,6 +123,9 @@
       <div id="dirs-box"></div>
     </div>
   </div>
+
+  <!-- FILTRI ATTIVI (chips) -->
+  <div id="active-filters" class="active-filters" style="margin-top:8px;padding:0 6px;"></div>
 </div>
 <!-- ==================================================================== -->
 
@@ -142,77 +167,282 @@
 <script>
 const $=q=>document.querySelector(q);
 
-/* ---- barra retrátil -------------------------------------------------- */
-$('#filt-toggle').onclick=()=>{
-  $('#filt-panel').classList.toggle('open');
-  $('#filt-toggle').textContent=$('#filt-panel').classList.contains('open')?'Filtri ▴':'Filtri ▾';
+/* ================== BARRA RETRÁTIL (com correção de altura) ================== */
+const _filtPanel  = document.querySelector('#filt-panel');
+const _filtToggle = document.querySelector('#filt-toggle');
+
+_filtToggle.onclick = () => {
+  const isOpening = !_filtPanel.classList.contains('open');
+
+  if (isOpening) {
+    // Abre
+    _filtPanel.classList.add('open');
+    _filtToggle.textContent = 'Filtri ▴';
+    _filtPanel.style.overflowY = 'auto';   // permite rolar quando ficar alto
+    _filtPanel.style.maxHeight = '';       // zera lixo anterior
+    resizeFilterPanel();                   // calcula altura alvo
+  } else {
+    // Fecha (anima de scrollHeight -> 0)
+    _filtToggle.textContent = 'Filtri ▾';
+    _filtPanel.style.maxHeight = _filtPanel.scrollHeight + 'px';
+    requestAnimationFrame(() => {
+      _filtPanel.classList.remove('open');
+      _filtPanel.style.maxHeight = '0px';
+      _filtPanel.style.overflowY = 'hidden';
+    });
+  }
+};
+
+// Limpa maxHeight inline ao fim da transição para não “reservar” espaço
+_filtPanel.addEventListener('transitionend', (e) => {
+  if (e.propertyName === 'max-height' && !_filtPanel.classList.contains('open')) {
+    _filtPanel.style.maxHeight = '';
+  }
+});
+
+// Ajusta a altura do painel com base no conteúdo (até 80% da viewport)
+function resizeFilterPanel(){
+  if (!_filtPanel.classList.contains('open')) return;
+  // Medir conteúdo
+  _filtPanel.style.maxHeight = 'none';
+  const contentH = _filtPanel.scrollHeight + 6;                    // folga
+  const maxByViewport = Math.max(240, Math.floor(window.innerHeight * 0.80)); // 80vh
+  const target = Math.min(contentH, maxByViewport);
+  _filtPanel.style.maxHeight = target + 'px';
+  _filtPanel.style.overflowY = contentH > target ? 'auto' : 'hidden';
+}
+addEventListener('resize', resizeFilterPanel);
+
+/* ---- BOTÃO “Filtri ▾/▴” (texto) já controlado acima ----------------- */
+
+
+/* -------------------- estado inicial (sessão) ------------------------- */
+const INITIAL = {{ (session.get('filtros_galeria') or {}) | tojson }};
+let currentFilters = {
+  text: INITIAL.text || "",
+  categoria: INITIAL.categoria || "",
+  tags: Array.isArray(INITIAL.tags) ? INITIAL.tags.slice(0) : [],
+  color: Array.isArray(INITIAL.color) ? INITIAL.color.slice(0) : [],
+  dirs: Array.isArray(INITIAL.dirs) ? INITIAL.dirs.slice(0) : []
+};
+
+/* ---- helpers render dos chips --------------------------------------- */
+function renderActiveFilters(){
+  const box=$('#active-filters'); box.innerHTML="";
+
+  function chip(label,type,val){
+    const sp=document.createElement('span'); sp.className='chip';
+    sp.textContent=label;
+    const rm=document.createElement('span'); rm.className='remove'; rm.textContent='❌';
+    rm.onclick=()=>{ removeFilter(type,val); sendFilters(); };
+    sp.appendChild(rm); box.appendChild(sp);
+  }
+
+  if(currentFilters.text) chip(`testo: ${currentFilters.text}`,'text',null);
+  if(currentFilters.categoria) chip(`categoria: ${currentFilters.categoria}`,'categoria',null);
+  currentFilters.tags.forEach(t=>chip(`#${t}`,'tags',t));
+  currentFilters.color.forEach(c=>chip(`colore: ${c}`,'color',c));
+  currentFilters.dirs.forEach(d=>chip(`dir: ${d.split(/[\\\\/]/).pop()}`,'dirs',d));
+}
+
+function addFilter(type,val){
+  if(!val && type!=='text' && type!=='categoria') return;
+  if(type==='text'){ currentFilters.text = val; }
+  else if(type==='categoria'){ currentFilters.categoria = val; } // única
+  else {
+    const arr = currentFilters[type];
+    if(!arr.includes(val)) arr.push(val);
+  }
+  renderActiveFilters();
+}
+
+function removeFilter(type,val){
+  if(type==='text'){ currentFilters.text=""; $('#text-filter').value=""; }
+  else if(type==='categoria'){
+    currentFilters.categoria="";
+    $('#cat-filter').value="";
+    // ao tirar categoria, some tags e limpa seleção de tags
+    $('#tags-area').classList.add('hidden');
+    $('#tags-box').innerHTML="";
+    currentFilters.tags=[];
+  } else {
+    currentFilters[type] = currentFilters[type].filter(x=>x!==val);
+    if(type==='color'){ $('#color-filter').value=""; }
+    if(type==='dirs'){
+      // desmarca pill visual
+      [...document.querySelectorAll('#dirs-box .pill.selected')].forEach(p=>{
+        if(p.dataset.path===val) p.classList.remove('selected');
+      });
+    }
+    if(type==='tags'){
+      // desmarca tag visual
+      [...document.querySelectorAll('#tags-box .tag.selected')].forEach(t=>{
+        if(t.textContent===val) t.classList.remove('selected');
+      });
+    }
+  }
+  renderActiveFilters();
+}
+
+/* ---- envia ao backend e recarrega ----------------------------------- */
+function sendFilters(){
+  const payload = {
+    text: currentFilters.text,
+    categoria: currentFilters.categoria,
+    tags: currentFilters.tags,
+    color: currentFilters.color,
+    dirs: currentFilters.dirs
+  };
+  fetch('/set_filtros_galeria',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  }).then(()=>{
+    if(location.pathname!='/galleria') location.href='/galleria';
+    else location.reload();
+  });
+}
+
+/* ---- BOTÕES APLICAR / PULISCI --------------------------------------- */
+$('#apply-filters').onclick=()=>sendFilters();
+$('#clear-filters').onclick=()=>{
+  currentFilters={text:"",categoria:"",tags:[],color:[],dirs:[]};
+  // limpa UI visual
+  $('#text-filter').value=""; $('#cat-filter').value=""; $('#color-filter').value="";
+  $('#tags-box').innerHTML=""; $('#tags-area').classList.add('hidden');
+  [...document.querySelectorAll('#dirs-box .pill.selected')].forEach(p=>p.classList.remove('selected'));
+  renderActiveFilters();
+  // informa backend para voltar ao feed popular
+  sendFilters();
 };
 
 /* ---- categorias & tags ---------------------------------------------- */
 const TAGS_URL="{{ url_for('static', filename='categorie.json') }}";
 const catSel=$('#cat-filter'),tagsArea=$('#tags-area'),tagsBox=$('#tags-box');
+
 fetch(TAGS_URL).then(r=>r.json()).then(j=>{
-  for(const c in j)catSel.append(new Option(c,c));
+  // popula categorias
+  for(const c in j) catSel.append(new Option(c,c));
+
+  // se veio categoria da sessão, aplica visual e carrega tags
+  if(currentFilters.categoria && j[currentFilters.categoria]){
+    catSel.value=currentFilters.categoria;
+    tagsBox.innerHTML=''; tagsArea.classList.remove('hidden');
+    j[currentFilters.categoria].tags.forEach(t=>{
+      const e=document.createElement('span'); e.className='tag'; e.textContent=t;
+      if(currentFilters.tags.includes(t)) e.classList.add('selected');
+      e.onclick=()=>{
+        e.classList.toggle('selected');
+        if(e.classList.contains('selected')){ addFilter('tags',t); }
+        else{ removeFilter('tags',t); }
+        sendFilters();                    // TAG dispara busca
+      };
+      tagsBox.appendChild(e);
+    });
+    // ao abrir com tags, recalcula altura do painel
+    resizeFilterPanel();
+  }
+
+  // mudar categoria NÃO dispara busca (só mostra tags + acumula)
   catSel.onchange=()=>{
-    tagsBox.innerHTML='';tagsArea.classList.add('hidden');
-    const c=catSel.value;if(c && j[c]){
+    const c=catSel.value;
+    if(!c){
+      removeFilter('categoria',null);
+      sendFilters();        // sem categoria, já refaz a busca (limpa tags também)
+      return;
+    }
+    addFilter('categoria',c);             // guarda no estado
+    // recria a área de tags para a categoria atual
+    tagsBox.innerHTML=''; tagsArea.classList.add('hidden');
+    if(j[c]){
       j[c].tags.forEach(t=>{
-        const e=document.createElement('span');e.className='tag';e.textContent=t;
-        e.onclick=()=>e.classList.toggle('selected');tagsBox.appendChild(e);
+        const e=document.createElement('span'); e.className='tag'; e.textContent=t;
+        if(currentFilters.tags.includes(t)) e.classList.add('selected');
+        e.onclick=()=>{
+          e.classList.toggle('selected');
+          if(e.classList.contains('selected')){ addFilter('tags',t); }
+          else{ removeFilter('tags',t); }
+          sendFilters();                  // TAG dispara busca
+        };
+        tagsBox.appendChild(e);
       });
       tagsArea.classList.remove('hidden');
+      resizeFilterPanel();                // ajusta altura por causa das tags
     }
+    renderActiveFilters();                // mostra chip de categoria, mas sem buscar
   };
 });
 
 /* ---- diretórios ------------------------------------------------------ */
 const DIRS={{ directories_indicizzate|tojson }};
 const dirsArea=$('#dirs-area'),dirsBox=$('#dirs-box'),dirBtn=$('#dir-btn');
-dirBtn.onclick=()=>dirsArea.classList.toggle('hidden');
+dirBtn.onclick=()=>{ dirsArea.classList.toggle('hidden'); if(!dirsArea.classList.contains('hidden')) resizeFilterPanel(); };
+
 DIRS.forEach(d=>{
   const path=typeof d==='string'?d:d.path;
   const nome=typeof d==='string'?'':(d.nome||'');
   const lbl=nome||path.split(/[\\/]/).pop();
-  const s=document.createElement('span');s.className='pill';s.textContent=lbl;
-  s.title=path;s.dataset.path=path;
-  s.onclick=()=>s.classList.toggle('selected');
+  const s=document.createElement('span'); s.className='pill'; s.textContent=lbl;
+  s.title=path; s.dataset.path=path;
+  if(currentFilters.dirs.includes(path)) s.classList.add('selected');
+  s.onclick=()=>{
+    s.classList.toggle('selected');
+    if(s.classList.contains('selected')) addFilter('dirs',path);
+    else removeFilter('dirs',path);
+    sendFilters();                        // DIR dispara busca
+  };
   dirsBox.appendChild(s);
 });
 
-/* ---- aplicar filtros ------------------------------------------------- */
-$('#apply-filters').onclick=()=>{
-  const tags=[...tagsBox.querySelectorAll('.tag.selected')].map(e=>e.textContent);
-  const dirs=[...dirsBox.querySelectorAll('.pill.selected')].map(e=>e.dataset.path);
-  const payload={
-    text:$('#text-filter').value.trim(),
-    categoria:catSel.value,
-    tags:tags,
-    color:$('#color-filter').value?[$('#color-filter').value]:[],
-    dirs:dirs
-  };
-  fetch('/set_filtros_galeria',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(payload)})
-   .then(()=>{if(location.pathname!='/galleria')location.href='/galleria';else location.reload();});
+/* ---- cores (cumulativas) -------------------------------------------- */
+$('#color-filter').onchange=()=>{
+  const v=$('#color-filter').value;
+  if(!v) return;
+  if(!currentFilters.color.includes(v)) addFilter('color',v);
+  $('#color-filter').value="";            // volta ao placeholder
+  sendFilters();                          // COR dispara busca
 };
+
+/* ---- texto (sem auto-busca ao digitar) ------------------------------ */
+// Atualiza só o estado enquanto digita (sem chamar sendFilters)
+$('#text-filter').addEventListener('input', ()=>{
+  currentFilters.text = $('#text-filter').value;  // mantém chip atualizado
+  renderActiveFilters();
+});
+
+// Pressionar Enter no campo de texto → dispara a busca
+$('#text-filter').addEventListener('keydown', (ev)=>{
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    currentFilters.text = $('#text-filter').value.trim();
+    sendFilters();
+  }
+});
+
+// Restaura o texto salvo na sessão (se houver)
+if (currentFilters.text) $('#text-filter').value = currentFilters.text;
+
+/* ---- primeira render dos chips -------------------------------------- */
+renderActiveFilters();
+
 
 /* ========== NOVO: busca por similaridade ============================== */
 async function cercaSimili(){
   if(currentImageIndex===null)return;
   const d=imagesData[currentImageIndex];
-  const dirs=[...dirsBox.querySelectorAll('.pill.selected')].map(e=>e.dataset.path);
-
   try{
     await fetch('/ricerca_simili',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({path:d.percorso,dirs:dirs})
+      body:JSON.stringify({path:d.percorso,dirs:currentFilters.dirs})
     }).then(r=>r.text()).then(html=>{
       document.open();document.write(html);document.close();
     });
   }catch(e){alert('Errore: '+e);}
 }
 
-/* ---------------- restante JS igual ---------------------------------- */
+
+/* ============================== GALERIA =============================== */
 const PER_PAGE={{ per_page|default(100) }};
 let totalResults={{ total_resultados }};
 let currentIndex={{ immagini|length }};
@@ -315,5 +545,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   observeImages();fetchInfoImmagini();
 });
 </script>
+
 </body>
 </html>

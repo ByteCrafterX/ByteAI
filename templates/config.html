@@ -4,82 +4,78 @@
     <meta charset="UTF-8">
     <title>Studio Elle - Configurazioni</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Mantém a mesma folha de estilo -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Fontes -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- Ícone -->
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
 </head>
 <script>
-window.addEventListener('load', ()=>{
+window.addEventListener('load', ()=> {
     const lo = document.getElementById('loading-overlay');
     if (lo) lo.style.display = 'none';
 });
 </script>
 <body>
 
-    <!-- HEADER -->
-    <header>
-        <div class="container">
-            <a href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
-                <span class="brand-name">Studio Elle Ricerca Immagini</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="{{ url_for('index') }}">Home</a></li>
-                    <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
-                    <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
-                    <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
-                    <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
-                    <li><a href="{{ url_for('about') }}">About</a></li>
-                    <li><a href="{{ url_for('logout') }}" style="color:red;">Uscire</a></li>
-                </ul>
+<header>
+    <div class="container">
+        <a href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="ByteAI Logo" class="logo">
+            <span class="brand-name">Studio Elle Ricerca Immagini</span>
+        </a>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
+                <li><a href="{{ url_for('conversor') }}">Convertitore</a></li>
+                <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
+                <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+                <li><a href="{{ url_for('about') }}">About</a></li>
+                <li><a href="{{ url_for('logout') }}" style="color:red;">Uscire</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<main class="container">
+    <div class="config-wrapper">
+        <!-- SIDEBAR -->
+        <aside class="sidebar-config-large">
+            <h2>Impostazioni Avanzate</h2>
+            <nav class="menu-vertical-large">
+                <a href="{{ url_for('configura_categorie') }}" class="button-blue">Categorie e Tag</a>
+                <a href="{{ url_for('programmazione_indicizzazione') }}" class="button-blue">Reindicizzazione</a>
+                <a href="{{ url_for('configura_parametri') }}" class="button-blue">Parametri</a>
+                <a href="{{ url_for('view_logs') }}" class="button-blue">Logs</a>
+                <a href="{{ url_for('gestione_utenti') }}" class="button-blue">Gestione Utenti</a>
+
+                <a href="{{ url_for('indicizzazione') }}" class="button-blue">Indicizzazione Immagini</a>
+                <a href="{{ url_for('configurazione_generativa') }}" class="button-blue">Configurazione Generativa</a>
+
+                <!-- 🔥 NOVA OPÇÃO -->
+                <a href="{{ url_for('configurazione_conversor') }}" class="button-blue">Conversione Automatica</a>
+
             </nav>
-        </div>
-    </header>
+        </aside>
 
-    <!-- CONTEÚDO PRINCIPAL DE CONFIGURAÇÕES -->
-    <main class="container">
-        <div class="config-wrapper">
-            <!-- SIDEBAR DE CONFIGURAÇÕES (Agora maior e mais organizada) -->
-            <aside class="sidebar-config-large">
-                <h2>Impostazioni Avanzate</h2>
-                <nav class="menu-vertical-large">
-                    <!-- Cada um dos botões / links de configuração -->
-                    <a href="{{ url_for('configura_categorie') }}" class="button-blue">Categorie e Tag</a>
-                    <a href="{{ url_for('programmazione_indicizzazione') }}" class="button-blue">Reindicizzazione</a>
-                    <a href="{{ url_for('configura_parametri') }}" class="button-blue">Parametri</a>
-                    <a href="{{ url_for('view_logs') }}" class="button-blue">Logs</a>
-                    <a href="{{ url_for('gestione_utenti') }}" class="button-blue">Gestione Utenti</a>
+        <!-- MAIN CONTENT -->
+        <section class="main-content-config">
+            <h1 class="page-title">Sezione Configurazioni</h1>
 
-                    <!-- Indicizzazione -->
-                    <a href="{{ url_for('indicizzazione') }}" class="button-blue">Indicizzazione Immagini</a>
-                    <a href="{{ url_for('configurazione_generativa') }}" class="button-blue">Configurazione Generativa</a>
-                </nav>
-            </aside>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="messages">
+                        {% for category, message in messages %}
+                            {% if 'config' in category or category in ['error','success','info'] %}
+                                <div class="message {{ category }}">{{ message }}</div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
 
-            <!-- Área principal di configurazioni -->
-            <section class="main-content-config">
-                <h1 class="page-title">Sezione Configurazioni</h1>
-
-                <!-- Exemplo de mensagens flash de sucesso/erro -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        <div class="messages">
-                            {% for category, message in messages %}
-                                {% if 'config' in category or category in ['error','success','info'] %}
-                                    <div class="message {{ category }}">{{ message }}</div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                {% endwith %}
-
-                <p>Benvenuto nella pagina di Configurazioni. Seleziona una sezione nel menu a lato per configurare.</p>
-            </section>
-        </div>
-    </main>
+            <p>Benvenuto nella pagina di Configurazioni. Seleziona una sezione nel menu a lato per configurare.</p>
+        </section>
+    </div>
+</main>
 </body>
 </html>

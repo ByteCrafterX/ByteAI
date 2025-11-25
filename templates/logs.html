@@ -2,76 +2,82 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Risultati della Ricerca</title>
+  <title>Logs dell'Applicazione</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
 </head>
+<body>
+<header>
+  <div class="container">
+    <a href="{{ url_for('index') }}" class="logo-link">
+      <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
+      <span class="brand-name">Studio Elle Ricerca Immagini</span>
+    </a>
+    <button id="menu-toggle" class="menu-toggle"><span></span><span></span><span></span></button>
+    <nav id="main-nav">
+      <ul>
+        <li><a href="{{ url_for('index') }}">Home</a></li>
+        <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
+        <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+        <li><a href="{{ url_for('logout') }}" class="logout-link">Uscire</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+  <h1 class="page-title">Logs</h1>
+
+  <div class="card">
+    <form method="get" action="{{ url_for('view_logs') }}" style="display:flex; gap:8px; flex-wrap:wrap">
+      <label style="display:flex; align-items:center; gap:8px">
+        Data: <input type="date" name="date" value="{{ date }}">
+      </label>
+      <label style="display:flex; align-items:center; gap:8px">
+        Cerca: <input type="text" name="q" placeholder="termine…" value="{{ search_term }}">
+      </label>
+      <button class="button-blue">Filtra</button>
+      <label class="pill" style="gap:8px"><input type="checkbox" id="auto" checked> Auto refresh</label>
+    </form>
+  </div>
+
+  {% if stats %}
+  <div class="card" style="display:flex; gap:14px; flex-wrap:wrap">
+    <span class="pill">Totale: {{ stats.total }}</span>
+    <span class="pill" style="border-color:#1e88e5;color:#1e88e5">INFO: {{ stats.INFO }}</span>
+    <span class="pill" style="border-color:#ff9800;color:#ff9800">WARNING: {{ stats.WARNING }}</span>
+    <span class="pill" style="border-color:#e53935;color:#e53935">ERROR: {{ stats.ERROR }}</span>
+    <span class="pill" style="border-color:#607d8b;color:#607d8b">DEBUG: {{ stats.DEBUG }}</span>
+  </div>
+  {% endif %}
+
+  <div id="log-box" class="card" style="background:#0c0f14; color:#cbd5e1; font:500 13px/1.5 ui-monospace,Menlo,Consolas,monospace; max-height:60vh; overflow:auto;">
+    {% for line in logs %}
+      <div>{{ line }}</div>
+    {% endfor %}
+  </div>
+</div>
+
 <script>
-window.addEventListener('load', ()=>{
-    const lo = document.getElementById('loading-overlay');
-    if (lo) lo.style.display = 'none';
-});
+  const $=q=>document.querySelector(q);
+  $('#menu-toggle')?.addEventListener('click', ()=>$('#main-nav').classList.toggle('open'));
+
+  const auto=$('#auto'), box=$('#log-box');
+  function refresh(){
+    const params=new URLSearchParams(location.search);
+    fetch('{{ url_for("view_logs") }}?'+params.toString(), {headers:{'X-Requested-With':'fetch'}})
+      .then(r=>r.text())
+      .then(html=>{
+        // pega só o conteúdo de #log-box
+        const tmp=document.createElement('div'); tmp.innerHTML=html;
+        const newBox=tmp.querySelector('#log-box');
+        if(newBox){ box.innerHTML=newBox.innerHTML; box.scrollTop=box.scrollHeight; }
+      }).catch(()=>{});
+  }
+  if(auto?.checked){ setInterval(refresh, 2000); }
+  auto?.addEventListener('change', ()=>{ if(auto.checked) refresh(); });
+  box.scrollTop=box.scrollHeight;
 </script>
-<body class="light">
-  <div id="loading-overlay" style="display:flex;"><div class="spinner"></div></div>
-
-  <header>
-    <div class="container">
-      <a href="{{ url_for('index') }}" class="logo-link">
-        <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
-        <span class="brand-name">Studio Elle Ricerca Immagini</span>
-      </a>
-
-      <button id="menu-toggle" class="menu-toggle"><span></span><span></span><span></span></button>
-
-      <nav id="main-nav">
-        <ul>
-          <li><a href="{{ url_for('index') }}">Home</a></li>
-          <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
-          <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
-          <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
-          <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
-          <li><a href="{{ url_for('about') }}">About</a></li>
-          <li><a href="{{ url_for('logout') }}" style="color:red;">Uscire</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-
-
-    <div class="container">
-        <h1>Logs di Sistema</h1>
-        <form method="get" action="{{ url_for('view_logs') }}">
-            <label for="date">Seleziona Data (YYYY-MM-DD):</label>
-            <input type="text" id="date" name="date" value="{{ date }}" placeholder="2025-02-18">
-
-            <label for="search">Ricerca:</label>
-            <input type="text" id="search" name="q" value="{{ search_term }}" placeholder="Termine di ricerca">
-
-            <button type="submit" class="button-blue">Cerca</button>
-        </form>
-
-        <h2>Statistiche</h2>
-        <ul>
-            <li>Total Log Entries: {{ stats.total }}</li>
-            <li>DEBUG: {{ stats.DEBUG }}</li>
-            <li>INFO: {{ stats.INFO }}</li>
-            <li>WARNING: {{ stats.WARNING }}</li>
-            <li>ERROR: {{ stats.ERROR }}</li>
-        </ul>
-
-        <h2>Log Entries</h2>
-        <div id="log-box">
-            {% if logs %}
-                {% for entry in logs %}
-                    <p>{{ entry }}</p>
-                {% endfor %}
-            {% else %}
-                <p>Nessun log trovato per la data selezionata.</p>
-            {% endif %}
-        </div>
-    </div>
 </body>
 </html>

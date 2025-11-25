@@ -22,7 +22,7 @@
         {% if session.logged_in %}
           <li><a href="{{ url_for('index') }}">Home</a></li>
           <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
-          <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
+          <li><a href="{{ url_for('conversor') }}">Convertitore</a></li>
           <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
           <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
           <li><a href="{{ url_for('about') }}">About</a></li>
@@ -182,6 +182,36 @@
         hid.value = sel.join(',');
       });
     })();
+
+     // helper pra evitar qualquer injeção no nome do arquivo
+  function _escapeHTML(s){
+    return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function exibirNomeImagem(){
+    const input = document.getElementById('image-input');
+    if(!input || !input.files || !input.files[0]) return;
+
+    const file = input.files[0];
+    const name = _escapeHTML(file.name);
+
+    const msg = document.getElementById('image-selected-message');
+    const nameSpan = document.getElementById('image-name');
+
+    // conteúdo: “Immagine selezionata: <badge>nome</badge> caricato ✓”
+    nameSpan.innerHTML = `<span class="file-pill">${name}</span>`;
+    msg.innerHTML = `Immagine selezionata: ${nameSpan.innerHTML} <span class="check">caricato ✓</span>`;
+    msg.style.display = 'block';
+    // força reflow pro transition pegar em alguns browsers
+    void msg.offsetWidth;
+    msg.classList.add('show');
+
+    // Se você quiser que a mensagem desapareça sozinha depois de 4s, deixe estas duas linhas:
+    //setTimeout(()=>msg.classList.remove('show'), 4000);
+    //setTimeout(()=>{ if(!msg.classList.contains('show')) msg.style.display='none'; }, 4500);
+
+    // Se preferir que fique visível até enviar o form, comente as duas linhas acima.
+  }
     </script>
 </body>
 </html>

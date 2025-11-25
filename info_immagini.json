@@ -1,107 +1,67 @@
 {
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/F2250 001K (00AK).jpg": {
-        "esclusiva": true,
-        "scadenza": "2025-02-20",
-        "note": ""
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/C5371 00AK.jpg": {
-        "esclusiva": false,
-        "scadenza": "",
-        "note": ""
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/F1141 00AK.jpg": {
-        "esclusiva": true,
-        "scadenza": "",
-        "note": ""
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/F3087 00AK.jpg": {
-        "esclusiva": false,
-        "scadenza": "",
-        "note": "rgdfsgsdg"
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/F1295 00AK.jpg": {
-        "esclusiva": true,
-        "scadenza": "",
-        "note": ""
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/F2900 00BK unico livello.jpg": {
-        "esclusiva": true,
-        "scadenza": "2025-02-21",
-        "note": ""
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/F2900 ORIGINALE.jpg": {
-        "esclusiva": false,
-        "scadenza": "",
-        "note": ""
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/F2704 00AK.jpg": {
-        "esclusiva": false,
-        "scadenza": "",
-        "note": ""
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/C4011 00LK.jpg": {
-        "esclusiva": false,
-        "scadenza": "",
-        "note": "TESTE DO QUE POSSO ESCREVER AQUI PRA LALALASD  AS D ASD A SD  ASD AS D AS D AS D AS D ASD A SD A D ASD AD AS D AS D AS D AS D AS D AS DAS D SA D SA D ASD AS D AD A S TESTANDO O LIMITE ANAO CRESCE PELO VISTO VEM A BARRA DE ROLAGEM"
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/C1308 00CK.jpg": {
-        "esclusiva": true,
-        "scadenza": "2025-03-13",
-        "note": "askdlbnnnnnnnnnniafnasdlkfnadklsfnsdklfadlkflksdngflkadsnglksdngklsfngkldfngkldfnklgndflkgndfklgnkldfgnkldfngkldfngkldfnglkdfgndfklngkldfngkldfngkldfngkldfngkldfnklgndfklgndfklngkldfngkldfngkldf"
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/G0297 00BK.jpg": {
-        "esclusiva": true,
-        "scadenza": "",
-        "note": ""
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/C5106 CON EFFETTO.jpg": {
-        "esclusiva": false,
-        "scadenza": "2025-02-28",
-        "note": "Teste de informaco"
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/A7961 00CK.jpg": {
-        "esclusiva": true,
-        "scadenza": "2025-03-13",
-        "note": ""
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/A1959 00BK.jpg": {
-        "esclusiva": true,
-        "scadenza": "",
-        "note": ""
-    },
-    "/home/marco-alecsander/Scrivania/STUDIO ELLE RGB (JPG)/F1491 00AK.jpg": {
-        "esclusiva": true,
-        "scadenza": "",
-        "note": "TEST"
-    },
-    "C:\\Users\\JUBIS\\Desktop\\st\\STUDIO ELLE RGB MENAGGIO (JPG)\\F0917 SALTO Y UN MEZZO 00iK.jpg": {
-        "esclusiva": true,
-        "scadenza": "",
-        "note": "ò"
-    },
-    "C:\\Users\\JUBIS\\Desktop\\st\\STUDIO ELLE RGB MENAGGIO (JPG)\\F3188 unico livello 00AK.jpg": {
-        "esclusiva": false,
-        "scadenza": "",
-        "note": ""
-    },
-    "C:\\Users\\JUBIS\\Desktop\\st\\STUDIO ELLE RGB MENAGGIO (JPG)\\G0692.jpg": {
-        "esclusiva": true,
-        "scadenza": "",
-        "note": ""
-    },
-    "C:\\Users\\JUBIS\\Desktop\\st\\STUDIO ELLE RGB MENAGGIO (JPG)\\F2972 NO RAPP 00FK.jpg": {
-        "esclusiva": true,
-        "scadenza": "",
-        "note": ""
-    },
-    "C:\\Users\\JUBIS\\Desktop\\st\\STUDIO ELLE RGB MENAGGIO (JPG)\\F0660 00AK.jpg": {
-        "esclusiva": true,
-        "scadenza": "",
-        "note": ""
-    },
-    "C:\\Users\\JUBIS\\Desktop\\st\\STUDIO ELLE RGB MENAGGIO (JPG)\\SPO5239 OK VAR unico livello.jpg": {
-        "esclusiva": false,
-        "scadenza": "",
-        "note": ""
-    }
+  "http://127.0.0.1:5000/immagini/C%3A%2FUsers%2FFuturaForma%2FDesktop%2FLETTURA%20ETIQUECHE%2F84845%2001KTC%20(00BK%20unico%20livello).jpg": {
+    "esclusiva": true,
+    "scadenza": "",
+    "note": ""
+  },
+  "http://127.0.0.1:5000/immagini/C%3A%5CUsers%5CFuturaForma%5CDesktop%5CLETTURA%20ETIQUECHE%5C84966%2003KC%20(00GK).jpg": {
+    "esclusiva": true,
+    "scadenza": "",
+    "note": ""
+  },
+  "http://127.0.0.1:5000/immagini/C%3A%2FUsers%2FFuturaForma%2FDesktop%2FLETTURA%20ETIQUECHE%2F82005%2000AK.jpg": {
+    "esclusiva": true,
+    "scadenza": "",
+    "note": ""
+  },
+  "http://127.0.0.1:5000/immagini/C%3A%2FUsers%2FFuturaForma%2FDesktop%2FLETTURA%20ETIQUECHE%2F83362%2000EK.jpg": {
+    "esclusiva": true,
+    "scadenza": "",
+    "note": "UJJ"
+  },
+  "http://127.0.0.1:5000/immagini/C%3A%2FUsers%2FFuturaForma%2FDesktop%2FLETTURA%20ETIQUECHE%2F83362%2000PK.jpg": {
+    "esclusiva": true,
+    "scadenza": "",
+    "note": ""
+  },
+  "C:\\Users\\FuturaForma\\Desktop\\LETTURA ETIQUECHE\\83362 00EK.jpg": {
+    "esclusiva": false,
+    "scadenza": "",
+    "note": ""
+  },
+  "C:\\Users\\FuturaForma\\Desktop\\LETTURA ETIQUECHE\\83658 0015K ( 00AEK).jpg": {
+    "esclusiva": true,
+    "scadenza": "",
+    "note": ""
+  },
+  "C:\\Users\\FuturaForma\\Desktop\\LETTURA ETIQUECHE\\82062 R0AK.jpg": {
+    "esclusiva": true,
+    "scadenza": "",
+    "note": ""
+  },
+  "C:\\Users\\FuturaForma\\Desktop\\LETTURA ETIQUECHE\\82062 ORIGINALE.jpg": {
+    "esclusiva": true,
+    "scadenza": "",
+    "note": ""
+  },
+  "C:\\Users\\FuturaForma\\Desktop\\LETTURA ETIQUECHE\\83658 00CK.jpg": {
+    "esclusiva": false,
+    "scadenza": "",
+    "note": ""
+  },
+  "C:\\Users\\FuturaForma\\Desktop\\LETTURA ETIQUECHE\\0544 00DK.jpg": {
+    "esclusiva": false,
+    "scadenza": "",
+    "note": ""
+  },
+  "C:\\Users\\FuturaForma\\Desktop\\LETTURA ETIQUECHE\\84966 03KC (00GK).jpg": {
+    "esclusiva": true,
+    "scadenza": "2025-09-30",
+    "note": ""
+  },
+  "C:\\Users\\FuturaForma\\Desktop\\LETTURA ETIQUECHE\\84845 00AK.jpg": {
+    "esclusiva": true,
+    "scadenza": "",
+    "note": ""
+  }
 }

@@ -1,10 +1,299 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>$Title$</title>
+  <title>Studio Elle – Conversione Automatica</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
+  <style>
+    .badge {display:inline-block;padding:4px 8px;border-radius:12px;font-weight:600}
+    .badge.on {background:#e8fff2;color:#1e7e34;border:1px solid #1e7e34}
+    .badge.off{background:#fff5f5;color:#b00020;border:1px solid #b00020}
+    .grid {display:grid;gap:16px}
+    .grid-2 {grid-template-columns: 1fr 1fr}
+    .card {border:1px solid #ddd;border-radius:10px;padding:14px;background:#fff}
+    .dir-option {padding:10px 12px;border:1px solid #ccc;border-radius:8px;cursor:pointer}
+    .dir-option.selected {background:#2ecc71;color:#fff;border-color:#27ae60;font-weight:600}
+    .stat {display:flex;align-items:center;gap:8px}
+    .stat .num {font-size:1.4rem;font-weight:700}
+
+    /* 🔹 Caixa de log estilo terminal */
+    .log-box{
+      height:320px;
+      overflow:auto;
+      border:1px solid #222;
+      border-radius:8px;
+      background:#0c0c0c;          /* fundo preto */
+      color:#00ff55;               /* verde terminal */
+      padding:12px;
+      font-family:Consolas, Menlo, monospace;
+      font-size:14px;
+      line-height:1.4;
+    }
+    .log-box p{margin:0 0 6px;white-space:pre-wrap}
+
+    .rules-list {padding-left:16px}
+    .rules-list li {margin:8px 0}
+    .actions {display:flex;gap:10px;flex-wrap:wrap}
+    .button-ghost {background:#fff;border:1px solid #999;border-radius:8px;padding:8px 12px;cursor:pointer}
+    .form-row {display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px}
+    .form-row > div {min-width:120px}
+    .cap {font-size:.9rem;color:#555}
+    .rule-opt {font-size:.9rem;color:#444}
+  </style>
 </head>
-<body>
-$END$
+<body class="conversione-page">
+
+<header>
+  <div class="container header-container">
+    <a href="{{ url_for('index') }}" class="header-brand">
+      <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
+      <span class="brand-name">Conversione Automatica</span>
+    </a>
+    <nav>
+      <ul class="nav-list">
+        <li><a href="{{ url_for('index') }}">Home</a></li>
+        <li><a href="{{ url_for('galleria') }}">Galleria</a></li>
+        <li><a href="{{ url_for('conversor') }}">Conversor</a></li>
+        <li><a href="{{ url_for('geracao') }}">Generazione</a></li>
+        <li><a href="{{ url_for('configurazioni') }}">Impostazioni</a></li>
+        <li><a href="{{ url_for('about') }}">About</a></li>
+        <li><a href="{{ url_for('logout') }}" style="color:red;">Uscire</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="messages" style="margin:10px 0 0">
+        {% for cat, msg in messages %}
+          <div class="message {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <h1 style="margin-top:10px;">Configurazione Conversione Automatica</h1>
+  <p>Monitora cartelle di input (PSD/PSB/IFD). Ogni regola contiene anche le opzioni di conversione (legate alla regola).</p>
+
+  <!-- STATUS + STATS -->
+  <div class="grid grid-2" style="margin-top:12px">
+    <div class="card">
+      <div><strong>Status Monitoraggio:</strong>
+        {% if monitor_on %}
+          <span class="badge on">ON</span>
+        {% else %}
+          <span class="badge off">OFF</span>
+        {% endif %}
+      </div>
+      <div style="margin-top:8px;color:#555">
+        <div>Ultima scansione: <span id="last-scan">{{ last_scan or "-" }}</span></div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button class="button-blue" id="btn-scan">Esegui scansione ora</button>
+        <a class="button-ghost" href="{{ url_for('configurazioni') }}">Torna alle Impostazioni</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;text-align:center">
+        <div class="stat">
+          <div style="width:100%">
+            <div class="num" id="st-scanned">0</div>
+            <div class="cap">Scansionati</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div style="width:100%">
+            <div class="num" id="st-converted">0</div>
+            <div class="cap">Convertiti</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div style="width:100%">
+            <div class="num" id="st-skip-exist">0</div>
+            <div class="cap">Saltati (esiste)</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div style="width:100%">
+            <div class="num" id="st-skip-index">0</div>
+            <div class="cap">Saltati (indicizzati)</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div style="width:100%">
+            <div class="num" id="st-errors">0</div>
+            <div class="cap">Errori</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNICO FORM: INPUT + OUTPUT + OPZIONI + SALVA REGOLA -->
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 10px">Nuova Regola (cartelle + opzioni)</h3>
+
+    <form action="{{ url_for('salva_config_conversor') }}" method="post" id="rule-form">
+      <!-- INPUT DIR -->
+      <label for="input_dir">Cartella di Input:</label>
+      <input type="text" name="input_dir" id="input_dir" placeholder="C:/percorso/cartella_psd" required>
+
+      <!-- OUTPUT DIR (clicável, sem pré-seleção) -->
+      <label class="directory-label" style="margin-top:12px;">Cartella di Output (clicca per selezionare):</label>
+      <div class="directories-selection selectable" id="output-select">
+        {% for d in directories_indicizzate %}
+          {% set p = (d.path if d.path is defined else (d['path'] if d['path'] is defined else d)) %}
+          {% set nome = (d.nome if d.nome is defined else (d['nome'] if d['nome'] is defined else '')) %}
+          {% set display_label = nome if nome else p.split('/')[-1] %}
+          <div class="dir-option" data-path="{{ p }}">
+            {{ display_label }} <span style="color:#666;font-size:0.9em;">({{ p }})</span>
+          </div>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="output_dir" id="output_dir" required>
+
+      <!-- OPZIONI DI CONVERSIONE (atreladas à regra) -->
+      <div class="form-row" style="margin-top:12px">
+        <div>
+          <label>Larghezza</label><br>
+          <input type="number" name="width" value="1200" style="width:100px">
+        </div>
+        <div>
+          <label>Altezza</label><br>
+          <input type="number" name="height" value="1200" style="width:100px">
+        </div>
+        <div>
+          <label>Qualità JPG</label><br>
+          <input type="number" name="quality" min="10" max="100" value="90" style="width:90px">
+        </div>
+        <div>
+          <label>Workers</label><br>
+          <input type="number" name="workers" value="1" min="1" style="width:80px">
+        </div>
+      </div>
+
+      <label style="display:block;margin:6px 0">
+        <input type="checkbox" name="square" checked>
+        Square crop
+      </label>
+
+      <label style="display:block;margin:6px 0">
+        <input type="checkbox" name="colorize_ia" checked>
+        Colorizzazione IA
+      </label>
+
+      <label style="display:block;margin:6px 0">
+        <input type="checkbox" name="keep_aspect" checked>
+        Mantieni proporzioni
+      </label>
+
+      <button type="submit" class="button-blue" style="margin-top:12px">💾 Salva Regola</button>
+    </form>
+
+    <p class="cap" style="margin-top:10px">Suggerimento: ogni regola ha le proprie opzioni. Puoi creare più regole con output diversi.</p>
+  </div>
+
+  <!-- LISTA REGOLE -->
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 10px">Regole Attuali</h3>
+    {% if config_watch and config_watch|length > 0 %}
+      <ul class="rules-list">
+        {% for cfg in config_watch %}
+          {% set opt = cfg.options or {} %}
+          <li>
+            <div><strong>Input:</strong> {{ cfg.input_dir }} → <strong>Output:</strong> {{ cfg.output_dir }}</div>
+            <div class="rule-opt">
+              Opzioni:
+              {% if opt.square %}square{% else %}no-square{% endif %} •
+              {% if opt.colorize_ia %}colorize IA{% else %}no colorize{% endif %} •
+              keep_aspect={{ 'on' if opt.keep_aspect else 'off' }} •
+              w={{ opt.width or 'auto' }} • h={{ opt.height or 'auto' }} • q={{ opt.quality or 90 }} • workers={{ opt.workers or 1 }}
+            </div>
+            <form action="{{ url_for('rimuovi_config_conversor') }}" method="post" style="display:inline-block;margin-top:4px">
+              <input type="hidden" name="input_dir" value="{{ cfg.input_dir }}">
+              <input type="hidden" name="output_dir" value="{{ cfg.output_dir }}">
+              <button type="submit" class="button-red" style="padding:2px 8px;font-size:12px;">Rimuovi</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p style="margin:0">Nessuna regola definita.</p>
+    {% endif %}
+  </div>
+
+  <!-- LOG -->
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 10px">Log Conversione Automatica</h3>
+    <div id="log-box" class="log-box">
+      {% for msg in auto_logs or [] %}
+        <p>{{ msg }}</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>&copy; 2025 FuturaForma – tutti i diritti riservati.</p>
+</footer>
+
+<script>
+/* Seleção de output SEM pré-seleção */
+const options = document.querySelectorAll("#output-select .dir-option");
+const hidden  = document.getElementById("output_dir");
+document.addEventListener("DOMContentLoaded", () => {
+  options.forEach(o => o.classList.remove("selected"));
+  if (hidden) hidden.value = "";
+});
+options.forEach(opt=>{
+  opt.addEventListener("click", ()=>{
+    options.forEach(o=>o.classList.remove("selected"));
+    opt.classList.add("selected");
+    if (hidden) hidden.value = opt.dataset.path || "";
+  });
+});
+
+/* logs + stats polling */
+function appendLog(msg){
+  const box=document.getElementById("log-box");
+  const p=document.createElement("p");
+  p.textContent=msg;
+  box.appendChild(p);
+  box.scrollTop=box.scrollHeight;
+}
+function updateStats(s){
+  if(!s) return;
+  document.getElementById("st-scanned").textContent     = s.scanned ?? 0;
+  document.getElementById("st-converted").textContent   = s.converted ?? 0;
+  document.getElementById("st-skip-exist").textContent  = s.skipped_existing ?? 0;
+  document.getElementById("st-skip-index").textContent  = s.skipped_indexed ?? 0;
+  document.getElementById("st-errors").textContent      = s.errors ?? 0;
+  document.getElementById("last-scan").textContent      = s.last_scan ?? '-';
+}
+function fetchStatus(){
+  fetch('{{ url_for("stato_conversor_auto") }}')
+    .then(r=>r.json())
+    .then(j=>{
+      if(j.new_logs && j.new_logs.length) j.new_logs.forEach(appendLog);
+      if(j.stats) updateStats(j.stats);
+    })
+    .catch(()=>{});
+}
+setInterval(fetchStatus, 3000);
+
+/* botão “scansiona ora” */
+document.getElementById("btn-scan").addEventListener("click", ()=>{
+  fetch('{{ url_for("forza_scansione_conversor") }}', {method:'POST'})
+    .then(()=>setTimeout(fetchStatus, 800))
+    .catch(()=>{});
+});
+</script>
 </body>
 </html>
+  

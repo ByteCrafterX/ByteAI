@@ -4,16 +4,96 @@ from collections import Counter
 from io import BytesIO
 from urllib.parse import unquote
 from logging.handlers import TimedRotatingFileHandler
-from geracao import geracao_bp, _get_pipe   #  ←  IMPORTANTE!
-threading.Thread(target=_get_pipe, daemon=True).start()
-
+from threading import Lock
+from threading import Lock
+import json, os, time
+import zipfile
 import numpy as np
 import faiss
+
 from PIL import Image
 from flask import (
     Flask, flash, jsonify, redirect, render_template, request,
     send_file, session, url_for
 )
+CONFIG_FILE = "config.json"
+
+# ==================== HELPERS DE DIRETÓRIO (sempre aplicar) ====================
+def _path_in_dirs(path: str, dirs: list[str]) -> bool:
+    """Retorna True se 'path' pertence a qualquer diretório em 'dirs'."""
+    if not dirs:
+        return True
+    try:
+        pn = os.path.normpath(path)
+        for d in dirs:
+            dn = os.path.normpath(d)
+            # começa pelo dir (aceita igual ou dentro)
+            if pn == dn or pn.startswith(dn + os.sep) or pn.startswith(dn):
+                return True
+    except Exception:
+        pass
+    return False
+
+def _filter_paths_by_dirs(paths: list[str], dirs: list[str]) -> list[str]:
+    """Filtra a lista completa de caminhos para conter só o que está dentro de 'dirs'."""
+    if not dirs:
+        return list(paths)
+    out = []
+    for p in paths:
+        if _path_in_dirs(p, dirs):
+            out.append(p)
+    return out
+
+# ----------------- Conversion Options Persistenti -----------------
+def load_conversion_options():
+    cfg = load_config()
+    return cfg.get("conversion_options", {
+        "width": None,
+        "height": None,
+        "square": True,
+        "keep_aspect": True,
+        "output_format": "jpg",
+        "skip_duplicates": True,
+        "workers": os.cpu_count(),
+        "quality": 85,
+        "colorize_ia": False
+    })
+
+def save_conversion_options(opts):
+    cfg = load_config()
+    cfg["conversion_options"] = opts
+    save_config(cfg)
+
+def load_config():
+    if not os.path.exists(CONFIG_FILE):
+        return {}
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def save_config(cfg):
+    try:
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"[ERRO] salvando config: {e}")
+
+# Blueprints / geração
+from geracao import geracao_bp, _get_pipe
+# Subir pipeline de geração **só se** explicitamente habilitado
+if os.getenv("BYTEAI_GENERATION", "off").lower() in ("1", "true", "on", "yes"):
+    threading.Thread(target=_get_pipe, daemon=True).start()
+
+
+# Projeto
+from auth_utils import login_required
+from progress import indicizzazione_progress, progress_lock
+from indicizza import indicizza_immagini
+from modello import cerca_immagini, encontrar_duplicatas, extrai_features_imagem, cerca_per_embedding
+from werkzeug.utils import secure_filename
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # -----------------------------------------------------------------------
 #  VARI AMBIENTE
@@ -61,14 +141,190 @@ FILTERS_KEY = "filtros_galeria"          # nome na sessão
 STATS_FILE = "search_stats.json"
 stats_lock = threading.Lock()
 ### HELPRS
+# ====== Sentinela di conversione: helpers globali ======
+WATCH_EXTS = (".psd", ".psb", ".ifd", ".tif", ".tiff",
+              ".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".jp2")
+
+def _load_indexed_paths():
+    """Carica i percorsi già indicizzati (percorsi_immagini.pkl) per saltare output già nel CLIP."""
+    try:
+        if os.path.exists(file_percorsi):
+            with open(file_percorsi, "rb") as f:
+                return set(pickle.load(f))
+    except Exception:
+        pass
+    return set()
+
+def _run_one_scan():
+    from datetime import datetime
+    import pathlib
+
+    cfg = load_config()
+    regole = cfg.get("conversion_watch", [])
+    if not regole:
+        _auto_log("[SCAN] Nessuna regola configurata.")
+        with auto_conv_lock:
+            s = auto_conversion_status.setdefault("stats", {})
+            s.setdefault("last_scan", "-")
+        return
+
+    # extensões suportadas
+    WATCH_EXTS = (".psd", ".psb", ".ifd", ".tif", ".tiff",
+                  ".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".jp2")
+
+    # --- carrega todos os caminhos indexados (imagens finais) uma volta ---
+    indexed_paths: set[str] = set()
+    try:
+        if os.path.exists(file_percorsi):
+            with open(file_percorsi, "rb") as f:
+                indexed_paths = set(pickle.load(f))
+    except Exception:
+        indexed_paths = set()
+
+    # mapa por diretório de saída -> nomes de arquivo já indexados lá
+    indexed_by_outdir: dict[str, set[str]] = {}
+    for p in indexed_paths:
+        p_norm = os.path.normpath(p)
+        outdir = os.path.dirname(p_norm)
+        fname = os.path.basename(p_norm)
+        indexed_by_outdir.setdefault(outdir, set()).add(fname)
+
+    # helpers de coerção segura
+    def _to_int_or_none(v):
+        if v in (None, "", "None"):
+            return None
+        try:
+            return int(v)
+        except Exception:
+            return None
+
+    def _to_bool(v):
+        if isinstance(v, bool):
+            return v
+        return str(v).strip().lower() in ("1", "true", "on", "yes", "y", "t")
+
+    # existência robusta (ignora arquivos 0 bytes/corrompidos)
+    def _file_exists_ok(path: str) -> bool:
+        try:
+            if not os.path.isfile(path):
+                return False
+            return os.path.getsize(path) > 1024  # >1KB
+        except Exception:
+            return False
+
+    local_scanned = local_converted = local_skip_ex = local_skip_idx = local_err = 0
+
+    for rule in regole:
+        in_dir = rule.get("input_dir")
+        out_dir = rule.get("output_dir")
+        opts = (rule.get("options") or {})
+
+        if not in_dir or not out_dir:
+            continue
+        if not os.path.exists(in_dir):
+            _auto_log(f"[WARN] Input non esiste: {in_dir}")
+            continue
+
+        try:
+            os.makedirs(out_dir, exist_ok=True)
+        except Exception as e:
+            _auto_log(f"[ERRORE] Output non accessibile: {out_dir} ({e})")
+            local_err += 1
+            continue
+
+        # --- prepara opções do conversor ---
+        try:
+            from conversor import ConversionOptions, _process
+
+            ctor_kwargs = {}
+            if "width" in opts:   ctor_kwargs["width"] = _to_int_or_none(opts.get("width"))
+            if "height" in opts:  ctor_kwargs["height"] = _to_int_or_none(opts.get("height"))
+            if "workers" in opts: ctor_kwargs["workers"] = int(opts.get("workers") or 1)
+
+            if "square" in opts:      ctor_kwargs["square"] = _to_bool(opts.get("square"))
+            if "keep_aspect" in opts: ctor_kwargs["keep_aspect"] = _to_bool(opts.get("keep_aspect"))
+
+            ctor_kwargs["skip_duplicates"] = True
+            if "icc_profile" in opts:   ctor_kwargs["icc_profile"] = opts.get("icc_profile") or None
+            if "output_format" in opts: ctor_kwargs["output_format"] = str(opts.get("output_format") or "jpg").lower()
+            else:                       ctor_kwargs["output_format"] = "jpg"
+
+            conv_opts = ConversionOptions(**ctor_kwargs)
+
+            if "colorize_ia" in opts and hasattr(conv_opts, "colorize_ia"):
+                setattr(conv_opts, "colorize_ia", _to_bool(opts.get("colorize_ia")))
+            if "quality" in opts and hasattr(conv_opts, "quality"):
+                q = _to_int_or_none(opts.get("quality"))
+                if q is not None:
+                    try:
+                        setattr(conv_opts, "quality", int(q))
+                    except Exception:
+                        pass
+
+        except Exception as e:
+            _auto_log(f"[ERRORE] Opzioni non valide per la regola {in_dir} → {out_dir}: {e}")
+            local_err += 1
+            continue
+
+        indexed_names_here = indexed_by_outdir.get(os.path.normpath(out_dir), set())
+
+        for root, _, files in os.walk(in_dir):
+            for fname in files:
+                if not fname.lower().endswith(WATCH_EXTS):
+                    continue
+
+                src = os.path.join(root, fname)
+                base = os.path.splitext(fname)[0]
+                out = os.path.join(out_dir, base + f".{conv_opts.output_format}")
+
+                local_scanned += 1
+
+                # 1) já existe na pasta de saída
+                if _file_exists_ok(out):
+                    local_skip_ex += 1
+                    _auto_log(f"[SKIP esiste] {src} → {out}")
+                    continue
+
+                # 2) já indexado nesse out_dir
+                if os.path.basename(out) in indexed_names_here:
+                    local_skip_idx += 1
+                    _auto_log(f"[SKIP indicizzato] {src} → {out}")
+                    continue
+
+                # 3) tenta converter
+                try:
+                    status, path_ret, detail = _process(src, conv_opts, out_dir)
+                    if status == "converted":
+                        local_converted += 1
+                        _auto_log(f"[OK] {src} → {out}")
+                    elif status == "skipped":
+                        local_skip_ex += 1
+                        _auto_log(f"[SKIP esiste] {src} → {out}")
+                    else:
+                        local_err += 1
+                        _auto_log(f"[ERRORE] {src}: {detail or 'errore sconosciuto'}")
+                except Exception as e:
+                    local_err += 1
+                    _auto_log(f"[ERRORE] {src}: {e}")
+
+    with auto_conv_lock:
+        s = auto_conversion_status.setdefault("stats", {})
+        s["scanned"] = s.get("scanned", 0) + local_scanned
+        s["converted"] = s.get("converted", 0) + local_converted
+        s["skipped_existing"] = s.get("skipped_existing", 0) + local_skip_ex
+        s["skipped_indexed"] = s.get("skipped_indexed", 0) + local_skip_idx
+        s["errors"] = s.get("errors", 0) + local_err
+        s["last_scan"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # -------------------------------------------------------------------
-OCR_META_FILE = "static/ocr_metadata.json"
+# -------------------------------------------------------------------
+# OCR (na RAIZ do projeto)
+# -------------------------------------------------------------------
+OCR_META_FILE = "ocr_metadata.json"
 
 def carrega_ocr_metadata() -> dict[str, str]:
-    """Carrega (ou cria vazio) o arquivo JSON com texto/tag extraído via OCR."""
+    """Carrega (ou cria vazio) o arquivo JSON com texto/tag extraído via OCR na RAIZ."""
     if not os.path.exists(OCR_META_FILE):
-        # garante que o arquivo exista para evitar erros de leitura
         with open(OCR_META_FILE, "w", encoding="utf-8") as f:
             json.dump({}, f, ensure_ascii=False, indent=2)
         return {}
@@ -78,6 +334,7 @@ def carrega_ocr_metadata() -> dict[str, str]:
     except Exception as e:
         logger.error("Errore lendo %s: %s", OCR_META_FILE, e)
         return {}
+
 def _load_stats():
     if os.path.exists(STATS_FILE):
         try:
@@ -100,7 +357,26 @@ def _save_stats(d):                         # d = Counter  (imagem->hits)
         with open(STATS_FILE, "w", encoding="utf-8") as f:
             json.dump(d, f, ensure_ascii=False, indent=2)
 
+INFO_IMMAGINI_FILE = "info_immagini.json"
 
+def carica_info_immagini() -> dict:
+    if not os.path.exists(INFO_IMMAGINI_FILE):
+        with open(INFO_IMMAGINI_FILE, "w", encoding="utf-8") as f:
+            json.dump({}, f, ensure_ascii=False, indent=2)
+        return {}
+    try:
+        with open(INFO_IMMAGINI_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error("Erro lendo %s: %s", INFO_IMMAGINI_FILE, e)
+        return {}
+
+def salva_info_immagini(data: dict):
+    try:
+        with open(INFO_IMMAGINI_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.error("Erro salvando %s: %s", INFO_IMMAGINI_FILE, e)
 # -----------------------------------------------------------------------
 #  *** ALIAS AUTOMATICI ***  per mantenere i vecchi url_for()
 # -----------------------------------------------------------------------
@@ -149,16 +425,113 @@ file_percorsi = 'percorsi_immagini.pkl'
 embeddings_file = 'embeddings_immagini.npy'
 config_file = 'config.json'
 categorie_file = 'static/categorie.json'
+# === Conversão Automática: estado/log/stats ===
+auto_conv_lock = Lock()
+auto_conversion_status = {
+    "log": [],           # últimas mensagens
+    "running": False,    # se o sentinela está no ciclo
+    "stats": {           # counters acumulados
+        "scanned": 0,
+        "converted": 0,
+        "skipped_existing": 0,
+        "skipped_indexed": 0,
+        "errors": 0,
+        "last_scan": "-"
+    }
+}
 
-# ==================== VARIÁVEIS GLOBAIS ====================
+def _auto_log(msg):
+    from datetime import datetime
+    ts = datetime.now().strftime("%H:%M:%S")
+    line = f"[{ts}] {msg}"
+    with auto_conv_lock:
+        auto_conversion_status["log"].append(line)
+        # mantém curto
+        if len(auto_conversion_status["log"]) > 300:
+            auto_conversion_status["log"] = auto_conversion_status["log"][-300:]
+
+# ==================== LOCKS / GLOBAIS ====================
+conv_lock = Lock()
+stats_lock = Lock()
+info_lock = Lock()
+schedule_lock = Lock()
+reindicizzazione_lock = Lock()
+eliminazione_lock = Lock()
+encontrar_lock = Lock()
+
+
 indicizzazione_thread = None
 indicizzazione_interrompida = threading.Event()
 directories_indicizzate = []
+# Estado global do conversor
+conv_lock = Lock()
+conversion_status = {
+    "log": [],
+    "progress": 0,
+    "running": False,
+    "sent": 0
+}
 
-# Bloqueio e estrutura para progresso da indexação
-from progress import indicizzazione_progress, progress_lock
 
-# Lê do disco a lista de diretórios já configurada
+# ==================== HELPERS: JSON ROBUSTO ====================
+def _load_json_robusto(path, default):
+    """
+    Tenta ler JSON em utf-8; se falhar, tenta cp1252.
+    Se continuar falhando, faz backup .old e recria com 'default'.
+    """
+    if not os.path.exists(path):
+        return default
+    # 1) UTF-8
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        pass
+    # 2) CP1252 (Windows)
+    try:
+        with open(path, 'r', encoding='cp1252') as f:
+            return json.load(f)
+    except Exception:
+        # 3) backup e recria limpo
+        try:
+            os.replace(path, path + '.old')
+        except Exception as e:
+            logger.error("Falha ao fazer backup de %s: %s", path, e)
+        with open(path, 'w', encoding='utf-8') as fw:
+            json.dump(default, fw, ensure_ascii=False, indent=4)
+        return default
+
+def _atomic_write_json(path, data):
+    tmp = path + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    os.replace(tmp, path)
+
+# ==================== STATS ====================
+FILTERS_KEY = "filtros_galeria"
+STATS_FILE = "search_stats.json"
+
+def _load_stats():
+    if os.path.exists(STATS_FILE):
+        try:
+            with open(STATS_FILE, encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+def _save_stats(d):
+    with stats_lock:
+        with open(STATS_FILE, "w", encoding="utf-8") as f:
+            json.dump(d, f, ensure_ascii=False, indent=2)
+
+def _norm(s: str) -> str:
+    s = unicodedata.normalize('NFKC', s)
+    s = s.casefold()
+    s = re.sub(r'[^\w\s]', ' ', s)
+    return re.sub(r'\s+', ' ', s).strip()
+
+# ==================== CONFIG (dirs/utenti/schedule) ====================
 def carica_configurazione():
     if not os.path.exists(config_file):
         return []
@@ -298,15 +671,7 @@ reindicizzazione_lock = threading.Lock()
 schedule_lock = threading.Lock()
 schedule_data = {"days": [], "hour": "00:00"}
 
-conversion_thread = None
-conversion_lock = threading.Lock()
-conversion_status = {
-    'percentuale': 0,
-    'log': [],
-    'completed': False,
-    'total_files': 0,
-    'processed_files': 0
-}
+
 
 def carica_pianificazione():
     global schedule_data
@@ -353,6 +718,108 @@ def index():
         directories_indicizzate=directories_indicizzate,
         categorie=categorie
     )
+# --- CONFIG PAGINA CONVERSORE AUTOMATICO (mostrar página) ---
+@app.route("/configurazione_conversor")
+@login_required
+def configurazione_conversor():
+    cfg = load_config()
+    regole = cfg.get("conversion_watch", [])
+    dirs_index = cfg.get("directories_indicizzate", directories_indicizzate)  # fallback seguro
+
+    with auto_conv_lock:
+        logs = auto_conversion_status.get("log", [])[-60:]
+        stats = auto_conversion_status.get("stats", {})
+        last_scan = stats.get("last_scan", "-")
+
+    return render_template(
+        "configurazione_conversor.html",
+        config_watch=regole,
+        directories_indicizzate=dirs_index,
+        auto_logs=logs,
+        monitor_on=True,
+        last_scan=last_scan
+    )
+
+# --- SALVA / ATUALIZA REGRA (UM BOTÃO) ---
+@app.route("/salva_config_conversor", methods=["POST"])
+@login_required
+def salva_config_conversor():
+    input_dir  = (request.form.get("input_dir") or "").strip()
+    output_dir = (request.form.get("output_dir") or "").strip()
+
+    # Opções ligadas à regra
+    def _to_int(v, default=None):
+        try:
+            return int(v) if (v is not None and str(v).strip() != "") else default
+        except Exception:
+            return default
+
+    width       = _to_int(request.form.get("width"))
+    height      = _to_int(request.form.get("height"))
+    quality     = _to_int(request.form.get("quality"), 90)
+    workers     = _to_int(request.form.get("workers"), 1)
+    square      = bool(request.form.get("square"))
+    colorize_ia = bool(request.form.get("colorize_ia"))
+    keep_aspect = bool(request.form.get("keep_aspect"))
+
+    if not input_dir or not output_dir:
+        flash("Specificare input e output.", "error")
+        return redirect(url_for("configurazione_conversor"))
+
+    cfg = load_config()
+    regole = cfg.get("conversion_watch", [])
+
+    # Regra com opzioni annesse
+    new_rule = {
+        "input_dir": input_dir,
+        "output_dir": output_dir,
+        "options": {
+            "width": width,
+            "height": height,
+            "quality": quality,
+            "workers": workers,
+            "square": square,
+            "keep_aspect": keep_aspect,
+            "colorize_ia": colorize_ia,
+            "output_format": "jpg"
+        }
+    }
+
+    # Se já existir (mesmo input+output), ATUALIZA opções; senão, adiciona
+    updated = False
+    for r in regole:
+        if r.get("input_dir") == input_dir and r.get("output_dir") == output_dir:
+            r["options"] = new_rule["options"]
+            updated = True
+            break
+    if not updated:
+        regole.append(new_rule)
+
+    cfg["conversion_watch"] = regole
+    save_config(cfg)
+
+    _auto_log(f"[CONFIG] {'Aggiornata' if updated else 'Aggiunta'} regola: "
+              f"IN='{input_dir}' → OUT='{output_dir}' "
+              f"opts={new_rule['options']}")
+
+    flash("Regola salvata con successo.", "success")
+    return redirect(url_for("configurazione_conversor"))
+
+
+@app.route("/rimuovi_config_conversor", methods=["POST"])
+@login_required
+def rimuovi_config_conversor():
+    input_dir = request.form.get("input_dir")
+    output_dir = request.form.get("output_dir")
+    cfg = load_config()
+    regole = cfg.get("conversion_watch", [])
+    new_regole = [r for r in regole if not (r.get("input_dir")==input_dir and r.get("output_dir")==output_dir)]
+    cfg["conversion_watch"] = new_regole
+    save_config(cfg)
+    flash("Regola rimossa.", "info")
+    _auto_log(f"[CONFIG] Rimossa regola: IN='{input_dir}' → OUT='{output_dir}'")
+    return redirect(url_for("configurazione_conversor"))
+
 
 # ==================== LOGIN ====================
 @app.route('/fazer_login', methods=['POST'])
@@ -540,6 +1007,29 @@ def aggiorna_nome_directory():
         flash('Directory non trovata.', 'error config')
     return redirect(url_for('indicizzazione'))
 
+
+
+
+def filtra_imagens(filtros):
+    """
+    Retorna lista de imagens que satisfaz TODOS os filtros ativos.
+    filtros = {"tags": [...], "dirs": [...], "colors": [...]}
+    """
+    todas = carrega_todas_imagens()   # implementa: lista completa
+
+    result = []
+    for img in todas:
+        ok = True
+        if filtros["tags"]:
+            ok = ok and any(t in img.tags for t in filtros["tags"])
+        if filtros["dirs"]:
+            ok = ok and any(img.path.startswith(d) for d in filtros["dirs"])
+        if filtros["colors"]:
+            ok = ok and img.color in filtros["colors"]
+        if ok:
+            result.append(img.path)
+    return result
+
 @app.route('/rimuovi_directory', methods=['POST'])
 @login_required
 def rimuovi_directory():
@@ -651,14 +1141,17 @@ def stato_reindicizzazione():
 @app.route("/ricerca", methods=["POST"])
 @login_required
 def ricerca():
-    dirs_sel = request.form.getlist("directories_selezionate") or [
+    # diretórios selecionados no formulário (ou mantém os que já estão na sessão)
+    dirs_sel = request.form.getlist("directories_selezionate") or session.get("directories_selezionate") or [
         d["path"] if isinstance(d, dict) else d for d in directories_indicizzate
     ]
+    # persiste imediatamente (qualquer fluxo depois usará isto)
+    session["directories_selezionate"] = dirs_sel
 
-    # --------------------------------------------------- pesquisa por imagem
+    # ========================= PESQUISA POR IMAGEM =========================
     image_file = request.files.get("image_file")
     if image_file and image_file.filename:
-        import tempfile, os
+        import tempfile
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
         image_file.save(tmp.name)
         try:
@@ -669,21 +1162,23 @@ def ricerca():
                 offset=0, limit=100
             )
         finally:
-            tmp.close(); os.remove(tmp.name)
+            tmp.close()
+            os.remove(tmp.name)
 
         if not totali:
             flash("Nessuna immagine simile trovata.", "info index")
             return redirect(url_for("index"))
 
-        # salva stats “popularità”
+        # estatística simples
         stats = Counter(_load_stats())
         for r in risultati:
             stats[r["percorso"]] += 1
         _save_stats(stats)
 
+        # limpa contexto de texto/tags, mas mantém diretórios na sessão
         session.update({
             "termo_busca": "", "categoria": "",
-            "tags_selezionate": "", "directories_selezionate": dirs_sel,
+            "tags_selezionate": "",
             FILTERS_KEY: {}
         })
         return render_template("risultati.html",
@@ -693,37 +1188,84 @@ def ricerca():
                                categorie=categorie,
                                directories_indicizzate=directories_indicizzate)
 
-    # --------------------------------------------------- pesquisa por texto
-    termo      = request.form.get("input_testo", "").strip()
-    categoria  = request.form.get("categoria", "").strip()
+    # ========================= PESQUISA POR TEXTO =========================
+    termo      = (request.form.get("input_testo") or "").strip()
+    categoria  = (request.form.get("categoria") or "").strip()
     tags_raw   = request.form.get("tags_selezionate", "")
     tags_list  = [t for t in tags_raw.split(",") if t]
 
-    descrizione = " ".join([termo] + tags_list)
+    # monta descrição base
+    descr_base = " ".join([termo] + tags_list).strip()
+    if not descr_base and categoria:
+        descr_base = categoria.strip()
+
+    # ========================= FEED (sem termo/tag) → **RESPEITA dirs** =========================
+    if not descr_base:
+        if not os.path.isfile(file_percorsi):
+            flash("Nessuna immagine indicizzata.", "info index")
+            return redirect(url_for("index"))
+
+        percorsi = pickle.load(open(file_percorsi, "rb"))
+        # AQUI: filtra pelos diretórios selecionados SEMPRE
+        percorsi = _filter_paths_by_dirs(percorsi, dirs_sel)
+
+        stats = _load_stats()
+        percorsi.sort(key=lambda p: (-stats.get(p, 0), p))
+
+        top = percorsi[:100] if len(percorsi) > 0 else []
+        immagini = [
+            {"percorso": p, "percorso_url": p, "extra_ocr_match": False}
+            for p in top
+        ]
+        totali = len(percorsi)
+
+        session.update({
+            "termo_busca": "",
+            "categoria": "",
+            "tags_selezionate": "",
+            FILTERS_KEY: {}
+        })
+        return render_template(
+            "risultati.html",
+            immagini=immagini,
+            total_resultados=totali,
+            per_page=100,
+            categorie=categorie,
+            directories_indicizzate=directories_indicizzate
+        )
+
+    # ========================= COM DESCRIÇÃO → OCR-first (já respeita dirs internamente) =========================
     immagini, totali = cerca_immagini(
-        descrizione             = descrizione,
-        categoria               = categoria,
-        file_indice_faiss       = file_indice_faiss,
-        file_percorsi           = file_percorsi,
-        directories_selezionate = dirs_sel,
-        offset=0, limit=100
+        descrizione=descr_base,
+        categoria=categoria,
+        file_indice_faiss=file_indice_faiss,
+        file_percorsi=file_percorsi,
+        directories_selezionate=dirs_sel,
+        offset=0, limit=100,
+        prefer_ocr=True
     )
 
+    if immagini:
+        stats = Counter(_load_stats())
+        for r in immagini:
+            stats[r["percorso"]] += 1
+        _save_stats(stats)
+
     session.update({
-        "termo_busca": termo,
-        "categoria": categoria,
-        "tags_selezionate": tags_raw,
-        "directories_selezionate": dirs_sel,
+        "termo_busca": "",
+        "categoria": "",
+        "tags_selezionate": "",
         FILTERS_KEY: {}
     })
 
-    return render_template("risultati.html",
-                           immagini=immagini,
-                           total_resultados=totali,
-                           per_page=100,
-                           categorie=categorie,
-                           directories_indicizzate=directories_indicizzate)
-
+    return render_template(
+        "risultati.html",
+        immagini=immagini,
+        total_resultados=totali,
+        per_page=100,
+        categorie=categorie,
+        directories_indicizzate=directories_indicizzate
+    )
 
 # -----------------------------------------------------------------
 @app.route("/carregar_mais_imagens", methods=["POST"])
@@ -733,90 +1275,94 @@ def carregar_mais_imagens():
     cur  = int(data.get("current_index", 0))
     step = int(data.get("per_page", 100))
 
-    extra = session.get(FILTERS_KEY, {})
-    termo = " ".join(filter(None, [session.get("termo_busca",""), extra.get("text","")]))
-    categoria = extra.get("categoria") or session.get("categoria", "")
-    tags   = [t for t in session.get("tags_selezionate","").split(",") if t] + extra.get("tags", [])
-    colori = extra.get("color", [])
-    dirs_sel = session.get("directories_selezionate") or [
+    extra      = session.get(FILTERS_KEY, {})
+    termo_base = session.get("termo_busca", "")
+    termo_extra= extra.get("text", "")
+    termo      = " ".join(filter(None, [termo_base, termo_extra])).strip()
+
+    categoria  = extra.get("categoria") or session.get("categoria", "")
+    tags       = [t for t in session.get("tags_selezionate","").split(",") if t] + extra.get("tags", [])
+    colori     = extra.get("color", [])
+    dirs_sel   = session.get("directories_selezionate") or [
         d["path"] if isinstance(d, dict) else d for d in directories_indicizzate
     ]
+    # se o filtro extra trouxe dirs, use-o e persista
+    if extra.get("dirs"):
+        dirs_sel = extra.get("dirs")
+        session["directories_selezionate"] = dirs_sel
 
+    # ========================= FEED POPULAR (sem termo/filters) → **RESPEITA dirs** =========================
     if not any([termo, categoria, tags, colori]):
-        # feed “populari / random”
         if not os.path.isfile(file_percorsi):
             return jsonify({"imagens": [], "end": True})
-        percorsi = pickle.load(open(file_percorsi,"rb"))
-        stats    = _load_stats()
+        percorsi = pickle.load(open(file_percorsi, "rb"))
+        percorsi = _filter_paths_by_dirs(percorsi, dirs_sel)   # <<<<<< filtro de diretórios
+
+        stats  = _load_stats()
         percorsi.sort(key=lambda p: (-stats.get(p,0), p))
         slice_   = percorsi[cur:cur+step]
         end_flag = (cur+len(slice_)) >= len(percorsi)
-        imgs = [{"percorso": p, "percorso_url": p} for p in slice_]
+        imgs     = [{"percorso": p, "percorso_url": p, "extra_ocr_match": False} for p in slice_]
         return jsonify({"imagens": imgs, "end": end_flag})
 
-    descr_full = " ".join([termo]+tags+colori)
+    # ========================= COM FILTROS → OCR-first (model já filtra dirs) =========================
+    descr_full = " ".join(filter(None, [termo] + tags + colori))
     imgs, tot = cerca_immagini(
-        descrizione = descr_full, categoria = categoria,
+        descrizione = descr_full,
+        categoria   = categoria,
         file_indice_faiss = file_indice_faiss,
-        file_percorsi = file_percorsi,
+        file_percorsi     = file_percorsi,
         directories_selezionate = dirs_sel,
-        offset = cur, limit = step
+        offset = cur, limit = step,
+        prefer_ocr = True
     )
     return jsonify({"imagens": imgs, "end": (cur+len(imgs))>=tot})
 
 
-# -----------------------  /galleria  ------------------------------------
 # -----------------------  /galleria  ------------------------------------
 @app.route("/galleria")
 @login_required
 def galleria():
     PER_PAGE = 100
 
-    # ───────────────────────── contexto salvo na sessão ─────────────────
+    # diretórios em vigor: o que veio da sessão (setado em /ricerca ou pelo filtro da UI)
     dirs_sel = session.get("directories_selezionate") or [
         d["path"] if isinstance(d, dict) else d
         for d in directories_indicizzate
     ]
-    extra     = session.get(FILTERS_KEY, {})          # {text,categoria,tags,color}
-    termo_base = session.get("termo_busca", "")
-    cat_base   = session.get("categoria", "")
-    tags_base  = [t for t in session.get("tags_selezionate", "").split(",") if t]
 
-    # filtros aplicados na barra da galeria
-    termo_f   = extra.get("text", "")
-    cat_f     = extra.get("categoria", "")
-    tags_f    = extra.get("tags", [])
-    colori_f  = extra.get("color", [])
+    extra = session.get(FILTERS_KEY, {})   # {text,categoria,tags,color,dirs}
 
-    # flags: há ou não algum filtro?
-    ha_filtro = any([termo_base, termo_f, cat_base or cat_f,
-                     tags_base, tags_f, colori_f])
+    termo_f   = (extra.get("text") or "").strip()
+    cat_f     = (extra.get("categoria") or "").strip()
+    tags_f    = extra.get("tags", []) or []
+    colori_f  = extra.get("color", []) or []
+    dirs_f    = extra.get("dirs", []) or []
 
-    # ───────────────────────── 1) feed “populari / random” ──────────────
+    # Se o usuário clicou em diretório na UI de risultati, ele manda em tudo
+    if dirs_f:
+        dirs_sel = dirs_f
+        session["directories_selezionate"] = dirs_sel  # persiste
+
+    ha_filtro = any([termo_f, cat_f, tags_f, colori_f])
+
+    # ============== 1) FEED POPULAR (sem filtros) – **RESPEITA dirs_sel** ==========
     if not ha_filtro:
-        percorsi = (
-            pickle.load(open(file_percorsi, "rb"))
-            if os.path.isfile(file_percorsi) else []
-        )
+        percorsi = pickle.load(open(file_percorsi, "rb")) if os.path.isfile(file_percorsi) else []
+        # filtro por diretórios SEMPRE
+        percorsi = _filter_paths_by_dirs(percorsi, dirs_sel)
+
         stats = _load_stats()
         percorsi.sort(key=lambda p: (-stats.get(p, 0), p))
 
-        top = percorsi[:PER_PAGE] or random.sample(
-            percorsi, min(PER_PAGE, len(percorsi))
-        )
-        immagini = [
-            {"percorso": p, "percorso_url": p, "extra_ocr_match": False}
-            for p in top
-        ]
+        top = percorsi[:PER_PAGE] or (random.sample(percorsi, min(PER_PAGE, len(percorsi))) if percorsi else [])
+        immagini = [{"percorso": p, "percorso_url": p, "extra_ocr_match": False} for p in top]
         tot = len(percorsi)
 
-    # ───────────────────────── 2) filtros → busca CLIP - OCR ────────────
+    # ============== 2) COM FILTROS → OCR-first (model já filtra dirs) ==============
     else:
-        # descrição completa para o modelo CLIP
-        descr = " ".join(filter(
-            None, [termo_base, termo_f] + tags_base + tags_f + colori_f
-        ))
-        categoria = cat_f or cat_base
+        descr = " ".join(filter(None, [termo_f] + tags_f + colori_f))
+        categoria = cat_f
 
         immagini, tot = cerca_immagini(
             descrizione             = descr,
@@ -824,22 +1370,25 @@ def galleria():
             file_indice_faiss       = file_indice_faiss,
             file_percorsi           = file_percorsi,
             directories_selezionate = dirs_sel,
-            offset=0, limit=PER_PAGE
+            offset=0, limit=PER_PAGE,
+            prefer_ocr=True
         )
-        # marca todos como “não veio de OCR” (se quiser OCR, adapte aqui)
-        for img in immagini:
-            img["extra_ocr_match"] = False
 
-    # ───────────────────────── render 1ª página ─────────────────────────
+        # estatística simples do “feed” filtrado
+        if immagini:
+            stats = Counter(_load_stats())
+            for r in immagini:
+                stats[r["percorso"]] += 1
+            _save_stats(stats)
+
     return render_template(
         "risultati.html",
-        immagini               = immagini,
-        total_resultados       = tot,
-        per_page               = PER_PAGE,
-        categorie              = categorie,
-        directories_indicizzate= directories_indicizzate
+        immagini                = immagini,
+        total_resultados        = tot,
+        per_page                = PER_PAGE,
+        categorie               = categorie,
+        directories_indicizzate = directories_indicizzate
     )
-
 
 @app.route("/set_filtros_galeria", methods=["POST"])
 @login_required
@@ -913,8 +1462,15 @@ def ricerca_simili():
 @app.route('/immagini/<path:percorso>')
 @login_required
 def immagini(percorso):
-    """Serve o arquivo original exatamente onde está no disco."""
-    safe_path = os.path.normpath(unquote(percorso))   # decodifica e normaliza
+    """Serve o arquivo original exatamente onde está no disco (bind mount).
+       Se vier sem '/', tornamos absoluto para evitar 404 por caminho relativo."""
+    from urllib.parse import unquote
+    safe_path = os.path.normpath(unquote(percorso))
+
+    # endurece: se não for absoluto, prefixa '/'
+    if not os.path.isabs(safe_path):
+        safe_path = "/" + safe_path
+
     if os.path.exists(safe_path):
         return send_file(safe_path)
     return "Immagine non trovata", 404
@@ -923,8 +1479,13 @@ def immagini(percorso):
 @app.route('/miniatura/<path:percorso>')
 @login_required
 def miniatura(percorso):
-    """Gera e devolve miniatura 200×200 em JPEG."""
+    """Gera e devolve miniatura 200×200 em JPEG (em memória).
+       Se vier sem '/', tornamos absoluto para evitar 404 por caminho relativo."""
+    from urllib.parse import unquote
     safe_path = os.path.normpath(unquote(percorso))
+    if not os.path.isabs(safe_path):
+        safe_path = "/" + safe_path
+
     if not os.path.exists(safe_path):
         return "Immagine non trovata", 404
 
@@ -934,6 +1495,7 @@ def miniatura(percorso):
         img.save(buf, 'JPEG')
         buf.seek(0)
         return send_file(buf, mimetype='image/jpeg')
+
 
 @app.route('/get_metadata', methods=['POST'])
 @login_required
@@ -1160,38 +1722,23 @@ def stato_eliminazione():
         progress_data = eliminazione_progress.copy()
     return jsonify(progress_data)
 
-# ==================== CONVERSOR ====================
-
-# =================================================================
-#  app.py  – SEZIONE /conversor  (sostituisci l'intera vecchia view)
-# =================================================================
-
-import os, tempfile
-from werkzeug.utils import secure_filename
-
-from conversor import ConversionOptions, bulk_convert
-
-# -----------------------------------------------------------------
+# CONVERSOR
 @app.route("/conversor", methods=["GET", "POST"])
+@login_required
 def conversor():
-    if not session.get("logged_in"):
-        return redirect(url_for("fazer_login"))
-
-    logs: list[str] = []
-    progress = 0
+    global conversion_status
 
     if request.method == "POST":
-        # ---------- 1. Recupera valori form ----------
-        dir_path  = request.form.get("percorso_input", "")
-        width     = request.form.get("width")   or None
-        height    = request.form.get("height")  or None
-        square    = "adatta_quadrato" in request.form
-        workers   = int(request.form.get("workers") or os.cpu_count())
+        dir_path         = request.form.get("percorso_input", "")
+        width            = request.form.get("width")   or None
+        height           = request.form.get("height")  or None
+        workers          = int(request.form.get("workers") or os.cpu_count())
+        skip_duplicates  = bool(request.form.get("skip_duplicates"))
+        colorize_ia      = bool(request.form.get("colorize_ia"))
 
         width  = int(width)  if width  else None
         height = int(height) if height else None
 
-        # Profilo ICC: salvato in tmp
         icc_profile_path = None
         icc_file = request.files.get("icc_profile")
         if icc_file and icc_file.filename:
@@ -1201,17 +1748,19 @@ def conversor():
             )
             icc_file.save(icc_profile_path)
 
-        # ---------- 2. Costruisci opzioni ----------
-        keep_aspect = False if (width and height) else True
-
+        from conversor import ConversionOptions, bulk_convert  # import local p/ evitar custo no import global
         opts = ConversionOptions(
-            width=width, height=height,
-            square=square, keep_aspect=keep_aspect,
+            width=width,
+            height=height,
+            square=False,  # default
+            keep_aspect=True,  # default
             skip_duplicates=True,
             icc_profile=icc_profile_path,
             workers=workers,
-            output_format="jpg",  # ← forza JPEG
+            output_format="jpg",  # forza JPEG
         )
+
+
 
         # ---------- 3. Esegui conversione ----------
         def _progress_cb(val):
@@ -1227,30 +1776,57 @@ def conversor():
         )
         progress = 100
 
-    # ---------- 4. Render ----------
-    return render_template(
-        "conversor.html",
-        logs=logs,
-        progress=progress,
-        cpu_count=os.cpu_count()
-    )
+        with conv_lock:
+            conversion_status = {
+                "log": ["🟢 Conversione avviata…"],
+                "progress": 0,
+                "running": True,
+                "sent": 0
+            }
 
+        def _run():
+            try:
+                def _cb(pct):
+                    with conv_lock:
+                        conversion_status["progress"] = pct
+                logs, stats = bulk_convert(dir_path, opts, _cb)
+                with conv_lock:
+                    conversion_status["log"].extend(logs)
+                    conversion_status["log"].append(
+                        f"=== Fine – OK {stats.get('converted',0)} | "
+                        f"Saltati {stats.get('skipped',0)} | Errori {stats.get('error',0)}"
+                    )
+            except Exception as e:
+                with conv_lock:
+                    conversion_status["log"].append(f"❌ Errore: {e}")
+            finally:
+                with conv_lock:
+                    conversion_status["progress"] = 100
+                    conversion_status["running"]  = False
 
-# ==================== INFO IMMAGINI (extra) ====================
-info_immagini_file = 'info_immagini.json'
-def carica_info_immagini():
-    if os.path.exists(info_immagini_file):
-        try:
-            with open(info_immagini_file, 'r') as f:
-                return json.load(f)
-        except:
-            return {}
-    return {}
+        threading.Thread(target=_run, daemon=True).start()
+        flash("Conversione avviata – controlla il log in tempo reale.", "info")
+        return redirect(url_for("conversor"))
 
-def salva_info_immagini(data_dict):
-    with open(info_immagini_file, 'w') as f:
-        json.dump(data_dict, f, indent=4, ensure_ascii=False)
+    with conv_lock:
+        logs_copy = list(conversion_status["log"])
+        prog      = conversion_status["progress"]
+    return render_template("conversor.html", logs=logs_copy, progress=prog, cpu_count=os.cpu_count())
 
+@app.route("/stato_conversor")
+@login_required
+def stato_conversor():
+    with conv_lock:
+        sent = conversion_status["sent"]
+        new  = conversion_status["log"][sent:]
+        conversion_status["sent"] = sent + len(new)
+        return jsonify({
+            "progress": conversion_status["progress"],
+            "running" : conversion_status["running"],
+            "log"     : new
+        })
+
+# INFO IMMAGINI
 @app.route('/info_immagini')
 @login_required
 def info_immagini():
@@ -1292,6 +1868,8 @@ def configura_parametri():
         {"nome": "embeddings_immagini.npy", "desc": "Embeddings delle Immagini (embeddings_immagini.npy)"},
         {"nome": "indice_faiss.index",      "desc": "Indice FAISS (indice_faiss.index)"},
         {"nome": "percorsi_immagini.pkl",   "desc": "Percorsi delle Immagini (percorsi_immagini.pkl)"},
+        {"nome": "ocr_metadata.json","desc": "Metadati OCR (ocr_metadata.json)"},
+        {"nome": "search_stats.json",       "desc": "Statistiche di Ricerca (search_stats.json)"},
     ]
     return render_template('parametri.html', files_data=files_data)
 
@@ -1365,8 +1943,12 @@ def export_tutti():
         'info_immagini.json',
         'embeddings_immagini.npy',
         'indice_faiss.index',
-        'percorsi_immagini.pkl'
+        'percorsi_immagini.pkl',
+        'static/ocr_metadata.json',
+        'search_stats.json'
     ]
+
+
     temp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
     zip_path = temp.name
     temp.close()
@@ -1426,6 +2008,44 @@ def recover_tutti():
     flash("Recuperate tutte le versioni .old per i file trovati.", 'success param')
     return redirect(url_for('configura_parametri'))
 
+
+
+
+# inicializa filtros na sessão PARA A GALERIA
+def _get_filters():
+    return session.get("filters", {"tags": [], "dirs": [], "colors": []})
+
+def _set_filters(f):
+    session["filters"] = f
+
+@app.route("/update_filters", methods=["POST"])
+def update_filters():
+    data = request.get_json(force=True)
+    f = _get_filters()
+
+    tipo  = data.get("type")
+    valor = data.get("value")
+    action = data.get("action")
+
+    if tipo not in f:
+        f[tipo] = []
+
+    if action == "add" and valor not in f[tipo]:
+        f[tipo].append(valor)
+    elif action == "remove" and valor in f[tipo]:
+        f[tipo].remove(valor)
+
+    _set_filters(f)
+
+    # agora filtra imagens combinando os filtros acumulados
+    imgs = filtra_imagens(f)
+    return jsonify({"filters": f, "images": imgs})
+
+@app.route("/clear_filters", methods=["POST"])
+def clear_filters():
+    _set_filters({"tags": [], "dirs": [], "colors": []})
+    imgs = filtra_imagens(_get_filters())
+    return jsonify({"filters": _get_filters(), "images": imgs})
 # ======================== LOGS ========================
 @app.route('/logs')
 @login_required
@@ -1640,8 +2260,231 @@ def configura_categorie():
     )
 
 
-# ==================== MAIN (waitress) ====================
+# ============================================
+# =  SCANSIONE / CONVERSIONE AUTOMATICA     =
+# ============================================
+
+@app.route("/stato_conversor_auto")
+@login_required
+def stato_conversor_auto():
+    # à prova de KeyError mesmo se 'stats' ainda não existir
+    with auto_conv_lock:
+        logs  = auto_conversion_status.get("log", [])[-40:]
+        stats = dict(auto_conversion_status.get("stats", {}))
+    return jsonify({"new_logs": logs, "stats": stats})
+
+@app.route("/forza_scansione_conversor", methods=["POST"])
+@login_required
+def forza_scansione_conversor():
+    _auto_log("[MANUALE] Scansione richiesta…")
+    threading.Thread(target=_run_one_scan, daemon=True).start()
+    return ("", 204)
+
+
+def _run_one_scan():
+    from datetime import datetime
+
+    cfg = load_config()
+    regole = cfg.get("conversion_watch", [])
+    if not regole:
+        _auto_log("[SCAN] Nessuna regola configurata.")
+        with auto_conv_lock:
+            s = auto_conversion_status.setdefault("stats", {})
+            s.setdefault("last_scan", "-")
+        return
+
+    WATCH_EXTS = (".psd", ".psb", ".ifd", ".tif", ".tiff",
+              ".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".jp2")
+
+
+    # --- carrega todos os caminhos indexados (imagens finais) uma vez ---
+    indexed_paths: set[str] = set()
+    try:
+        if os.path.exists(file_percorsi):
+            with open(file_percorsi, "rb") as f:
+                indexed_paths = set(pickle.load(f))
+    except Exception:
+        indexed_paths = set()
+
+    # mapa: diretório de saída -> nomes de arquivo já indexados nele
+    indexed_by_outdir: dict[str, set[str]] = {}
+    for p in indexed_paths:
+        p_norm = os.path.normpath(p)
+        outdir = os.path.dirname(p_norm)
+        fname  = os.path.basename(p_norm)
+        indexed_by_outdir.setdefault(outdir, set()).add(fname)
+
+    # helpers de coerção
+    def _to_int_or_none(v):
+        if v in (None, "", "None"):
+            return None
+        try:
+            return int(v)
+        except Exception:
+            return None
+
+    def _to_bool(v):
+        if isinstance(v, bool):
+            return v
+        return str(v).strip().lower() in ("1", "true", "on", "yes", "y", "t")
+
+    # existência robusta (ignora arquivos 0 bytes/fantasmas)
+    def _file_exists_ok(path: str) -> bool:
+        try:
+            if not os.path.isfile(path):
+                return False
+            return os.path.getsize(path) > 1024  # >1KB
+        except Exception:
+            return False
+
+    local_scanned = local_converted = local_skip_ex = local_skip_idx = local_err = 0
+
+    for rule in regole:
+        in_dir  = rule.get("input_dir")
+        out_dir = rule.get("output_dir")
+        opts    = (rule.get("options") or {})
+
+        if not in_dir or not out_dir:
+            continue
+        if not os.path.exists(in_dir):
+            _auto_log(f"[WARN] Input non esiste: {in_dir}")
+            continue
+
+        # garante saída
+        try:
+            os.makedirs(out_dir, exist_ok=True)
+        except Exception as e:
+            _auto_log(f"[ERRORE] Output non accessibile: {out_dir} ({e})")
+            local_err += 1
+            continue
+
+        # --- prepara opções do conversor (NÃO passa 'quality' no __init__) ---
+        try:
+            from conversor import ConversionOptions, _process
+
+            ctor_kwargs = {}
+            if "width" in opts:   ctor_kwargs["width"]   = _to_int_or_none(opts.get("width"))
+            if "height" in opts:  ctor_kwargs["height"]  = _to_int_or_none(opts.get("height"))
+            if "workers" in opts: ctor_kwargs["workers"] = int(opts.get("workers") or 1)
+
+            if "square" in opts:      ctor_kwargs["square"]      = _to_bool(opts.get("square"))
+            if "keep_aspect" in opts: ctor_kwargs["keep_aspect"] = _to_bool(opts.get("keep_aspect"))
+
+            ctor_kwargs["skip_duplicates"] = True  # sentinel sempre pula duplicados
+            if "icc_profile" in opts:   ctor_kwargs["icc_profile"]   = opts.get("icc_profile") or None
+            if "output_format" in opts: ctor_kwargs["output_format"] = str(opts.get("output_format") or "jpg").lower()
+            else:                       ctor_kwargs["output_format"] = "jpg"
+
+            conv_opts = ConversionOptions(**ctor_kwargs)
+
+            # pós-construtor opcionais (se a classe tiver os atributos)
+            if "colorize_ia" in opts and hasattr(conv_opts, "colorize_ia"):
+                setattr(conv_opts, "colorize_ia", _to_bool(opts.get("colorize_ia")))
+            if "quality" in opts and hasattr(conv_opts, "quality"):
+                q = _to_int_or_none(opts.get("quality"))
+                if q is not None:
+                    try:
+                        setattr(conv_opts, "quality", int(q))
+                    except Exception:
+                        pass
+
+        except Exception as e:
+            _auto_log(f"[ERRORE] Opzioni non valide per la regola {in_dir} → {out_dir}: {e}")
+            local_err += 1
+            continue
+
+        # set de nomes já indexados **neste** out_dir
+        indexed_names_here = indexed_by_outdir.get(os.path.normpath(out_dir), set())
+
+        for root, _, files in os.walk(in_dir):
+            for fname in files:
+                if not fname.lower().endswith(WATCH_EXTS):
+                    continue
+
+                src = os.path.join(root, fname)
+                base = os.path.splitext(fname)[0]
+                out = os.path.join(out_dir, base + ".jpg")
+
+                local_scanned += 1
+
+                # 1) pular se já existe um arquivo OK na pasta de saída (não conta arquivo fantasma)
+                if _file_exists_ok(out):
+                    local_skip_ex += 1
+                    _auto_log(f"[SKIP esiste] {src} → {out}")
+                    continue
+
+                # 2) pular se JÁ ESTÁ INDICIZZATO **neste mesmo out_dir**
+                if os.path.basename(out) in indexed_names_here:
+                    local_skip_idx += 1
+                    _auto_log(f"[SKIP indicizzato] {src} → {out}")
+                    continue
+
+                # 3) tenta converter
+                try:
+                    # agora passamos explicitamente o out_dir
+                    status, path_ret, detail = _process(src, conv_opts, dest_dir=out_dir)
+
+                    if status == "converted":
+                        local_converted += 1
+                        _auto_log(f"[OK] {src} → {out}")
+                    elif status == "skipped":
+                        local_skip_ex += 1
+                        _auto_log(f"[SKIP esiste] {src} → {out}")
+                    else:
+                        local_err += 1
+                        _auto_log(f"[ERRORE] {src}: {detail or 'errore sconosciuto'}")
+                except Exception as e:
+                    local_err += 1
+                    _auto_log(f"[ERRORE] {src}: {e}")
+
+    # acumula counters globais
+    with auto_conv_lock:
+        s = auto_conversion_status.setdefault("stats", {})
+        s["scanned"]          = s.get("scanned", 0) + local_scanned
+        s["converted"]        = s.get("converted", 0) + local_converted
+        s["skipped_existing"] = s.get("skipped_existing", 0) + local_skip_ex
+        s["skipped_indexed"]  = s.get("skipped_indexed", 0) + local_skip_idx
+        s["errors"]           = s.get("errors", 0) + local_err
+        s["last_scan"]        = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def start_conversion_sentinel():
+    """
+    Loop sentinella che richiama _run_one_scan() ogni 10s.
+    Mantiene 'auto_conversion_status.running' e inizializza 'stats'.
+    """
+    def loop():
+        _auto_log("[SENTINELLA] Avviato. Se 'pyvips' non è disponibile, uso Pillow (OK).")
+        while True:
+            try:
+                with auto_conv_lock:
+                    # garante estrutura 'stats'
+                    st = auto_conversion_status.setdefault("stats", {})
+                    st.setdefault("scanned", 0)
+                    st.setdefault("converted", 0)
+                    st.setdefault("skipped_existing", 0)
+                    st.setdefault("skipped_indexed", 0)
+                    st.setdefault("errors", 0)
+                    st.setdefault("last_scan", "-")
+                    auto_conversion_status["running"] = True
+
+                _run_one_scan()
+
+            except Exception as e:
+                _auto_log(f"[SENTINELLA] Errore di ciclo: {e}")
+
+            finally:
+                with auto_conv_lock:
+                    auto_conversion_status["running"] = False
+
+            time.sleep(int(os.getenv("CONV_SCAN_INTERVAL", "60")))  # default: 60s
+
+
+    t = threading.Thread(target=loop, daemon=True)
+    t.start()
+
 if __name__ == '__main__':
+    start_conversion_sentinel()
     ensure_default_user()
     logger.debug("[DEBUG] Chamando start_scheduler() p/ APScheduler.")
     start_scheduler()

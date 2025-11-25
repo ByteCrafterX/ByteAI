@@ -1140,6 +1140,12 @@ textarea#note-immagine {
 
 
 /* --- barra filtri compatta ----------------------------------- */
+.filter-bar.sticky {
+  position: sticky;
+  top: 70px;       /* altura do header */
+  z-index: 50;
+}
+
 .filter-bar{
     display:flex;align-items:center;gap:6px;
     max-width:95%;margin:15px auto 0;padding:6px 10px;
@@ -1177,3 +1183,210 @@ textarea#note-immagine {
   inset:0;background:rgba(255,255,255,.7);z-index:9999;
   align-items:center;justify-content:center}
 
+/* -------------- Conversor (layout 2-colunas) -------------- */
+.conv-grid             {display:flex;flex-wrap:wrap;gap:28px;max-width:1200px;margin:40px auto;}
+.conv-grid > div       {flex:1 1 460px;}
+
+.pane                  {background:#fff;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.12);padding:24px;}
+
+.form-title            {font:600 1.4rem Orbitron,Arial,sans-serif;margin-bottom:18px;color:#0067c5}
+
+.form-group label      {font-weight:500}
+
+.input-text,
+.input-small           {width:100%;padding:6px 8px;border:1px solid #a4b7d1;border-radius:6px}
+.input-small           {max-width:140px}
+
+.convert-button        {background:#0067c5;color:#fff;border:none;border-radius:8px;font-weight:600;
+                        padding:10px 26px;margin-top:16px;cursor:pointer;transition:.2s}
+.convert-button:hover  {filter:brightness(.93)}
+
+progress                {height:18px;width:100%}
+
+/* pill-checkbox */
+.ck-pill               {display:inline-flex;align-items:center;gap:6px;background:#e6efff;
+                        border:1px solid #0067c5;border-radius:16px;padding:4px 12px;margin:4px 4px;
+                        cursor:pointer;font-size:.88rem}
+.ck-pill input         {accent-color:#0067c5}
+
+/* log caixa */
+.log-box               {background:#f9f9f9;height:400px;overflow-y:auto;border-radius:8px;
+                        padding:16px;border:1px solid #ddd}
+.log-box p             {margin:2px 0;font-size:.9rem;font-family:monospace;white-space:pre-wrap}
+
+/* responsivo */
+@media (max-width:750px){
+  .conv-grid{flex-direction:column}
+}
+
+/* === PATCH 2025-08-14 — Modal responsivo sem cortes ================== */
+/* Mantém tua animação/estrutura, mas desloca o scroll para o conteúdo. */
+:root{
+  --modal-pad: 20px;
+  --modal-max-w: min(1100px, 96svw);
+  --modal-max-h: min(92svh, 900px);
+}
+
+.image-details{
+  /* fica acima de outros overlays duplicados no CSS */
+  z-index: 1100 !important;
+
+  /* largura/altura seguras para qualquer viewport (sv* lida melhor com mobile) */
+  max-width: var(--modal-max-w) !important;
+  width: var(--modal-max-w) !important;
+  max-height: var(--modal-max-h) !important;
+
+  /* o scroll não fica no container do modal (evita “cortes”) */
+  overflow: visible !important;
+}
+
+.image-details-content{
+  /* ocupa a altura útil do modal e vira a área rolável */
+  max-height: calc(var(--modal-max-h) - var(--modal-pad) * 2) !important;
+  overflow: auto !important;
+
+  /* robustez de layout */
+  display: flex;
+  gap: 20px;
+}
+
+.image-preview{
+  flex: 1 1 auto;
+  min-width: 0;               /* permite encolher sem quebrar */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.image-preview img{
+  /* garante que a imagem nunca passe da área útil */
+  max-height: calc(var(--modal-max-h) - 160px) !important; /* reserva espaço p/ texto/botões */
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.metadata-container{
+  flex: 0 0 360px;            /* coluna lateral estável em desktop */
+  min-width: 300px;
+  max-width: 600px;
+  max-height: calc(var(--modal-max-h) - var(--modal-pad) * 2) !important;
+  overflow: auto !important;
+}
+
+/* ——— Mobile/Tablet: empilha, mantém tudo visível e rolável ——— */
+@media (max-width: 1024px){
+  .image-details{
+    width: 96svw !important;
+    max-height: 92svh !important;
+    /* mantém tua animação, só reduz o scale pra caber mais folgado */
+    transform: translate(-50%, -50%) scale(0.95) !important;
+  }
+
+  .image-details-content{
+    /* como já empilha no teu CSS, só garante a área rolável total */
+    max-height: calc(92svh - var(--modal-pad) * 2) !important;
+    overflow: auto !important;
+  }
+
+  .image-preview img{
+    max-height: 60svh !important;
+  }
+
+  /* no mobile tu já oculta metadados por padrão; quando visíveis, rolam */
+  .metadata-container,
+  .metadata-container.show-mobile{
+    max-height: calc(92svh - var(--modal-pad) * 2) !important;
+    overflow: auto !important;
+  }
+}
+
+/* bloquear “scroll bleed” quando o modal está aberto */
+.image-details.open{
+  overscroll-behavior: contain;
+}
+/* Borda vermelha para imagens exclusivas */
+.esclusiva {
+  border: 5px solid red !important;
+}
+
+/* Caixa de log estilo terminal */
+.log-box {
+  height: 320px;
+  overflow: auto;
+  border: 1px solid #222;
+  border-radius: 6px;
+  background: #0c0c0c;          /* fundo preto */
+  color: #00ff55;               /* verde estilo cmd */
+  padding: 10px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.log-box p {
+  margin: 0 0 6px;
+  white-space: pre-wrap;
+}
+
+/* ================= FILTROS ATIVOS / CHIPS ================== */
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 14px 4px;
+}
+
+.filter-chip {
+  background: #0067c5;
+  color: #fff;
+  border-radius: 16px;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  cursor: default;
+  transition: background 0.2s;
+}
+
+.filter-chip:hover {
+  background: #00509e;
+}
+
+.filter-chip span {
+  cursor: pointer;
+  font-weight: bold;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.filter-chip span:hover {
+  color: #ffb3b3; /* X em vermelho claro quando passa o mouse */
+}
+/* Feedback sutil quando a imagem é escolhida */
+#image-selected-message{
+  display:none;
+  opacity:0;
+  transition:opacity .25s ease;
+  color:#2c7a2c;                 /* verde discreto */
+  font-style:normal;
+}
+#image-selected-message.show{    /* mostrado com fade-in */
+  display:block;
+  opacity:1;
+}
+#image-selected-message .file-pill{
+  display:inline-block;
+  background:#eef7ee;
+  border:1px solid #bfe2bf;
+  color:#2c7a2c;
+  padding:2px 8px;
+  border-radius:12px;
+  font-weight:600;
+  margin-left:4px;
+}
+#image-selected-message .check{
+  margin-left:6px;
+  font-weight:700;
+}
